@@ -1,0 +1,56 @@
+﻿<Window x:Class="PointEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PointEditor"
+        mc:Ignorable="d"
+        Title="Point editor" Height="450" Width="800">
+    <Grid>
+        <GroupBox Header="Canvas" Margin="0,0,405,0">
+            <Canvas x:Name="mainCanvas" MouseDown="mainCanvas_MouseDown" Background="#FF949494"/>
+        </GroupBox>
+        <GroupBox Header="Параметры" Margin="0,0,0,10" HorizontalAlignment="Right" Width="400">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="290*"/>
+                    <RowDefinition Height="111*"/>
+                </Grid.RowDefinitions>
+                <GroupBox Header="Цвет карандаша (Не влияет на результат)" Height="156" VerticalAlignment="Top">
+                    <Grid>
+                        <Slider x:Name="R" Margin="15,28,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
+                        <Slider x:Name="G" Margin="15,51,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
+                        <Slider x:Name="B" Margin="15,74,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
+                        <TextBox x:Name="ColorPicker_HEX" Margin="15,112,241,0" TextWrapping="Wrap" Text="HEX" VerticalAlignment="Top" TextChanged="ColorPicker_HEX_TextChanged"/>
+                        <Rectangle x:Name="Preview" Stroke="Black" Margin="226,28,0,0" RenderTransformOrigin="0.47,0.593" Height="102" VerticalAlignment="Top" HorizontalAlignment="Left" Width="109"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Инструменты" Margin="0,166,0,0" Grid.RowSpan="2">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="12*"/>
+                            <ColumnDefinition Width="28*"/>
+                            <ColumnDefinition Width="211*"/>
+                            <ColumnDefinition Width="125*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click="Button_Click" Grid.ColumnSpan="3"/>
+                        <Button Content="Удалить" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Click="Button_Click_1" Grid.ColumnSpan="3" Width="106"/>
+                        <TextBox VerticalScrollBarVisibility="Visible" x:Name="output" Margin="89,135,10,57" TextWrapping="Wrap" Text="Вывод" Grid.Column="2" Grid.ColumnSpan="2"/>
+                        <Button Content="Получить точки" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Click="Button_Click_2" Grid.ColumnSpan="3" Width="106"/>
+                        <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="10,85,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Scale_Click"/>
+                        <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Move_Click"/>
+                        <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="10,135,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Smooth_Click"/>
+                        <ListBox x:Name="PolygonList" Grid.Column="2" MouseDoubleClick="PolygonList_MouseDoubleClick"  SelectionChanged="PolygonList_Selected" Margin="89,10,10,0" Grid.ColumnSpan="2" Height="120" VerticalAlignment="Top">
+                            <!--<ListBox.CommandBindings>
+                                <CommandBinding Command="Deselect" Executed="ClearPolygonListSelection"/>
+                            </ListBox.CommandBindings>
+                            <ListBox.InputBindings>
+                                <KeyBinding Key="Esc" Command="Deselect"/>
+                            </ListBox.InputBindings>-->
+                        </ListBox>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>

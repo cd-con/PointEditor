@@ -6,12 +6,12 @@
         xmlns:local="clr-namespace:PointEditor"
         mc:Ignorable="d"
         ResizeMode="NoResize"
-        Title="MessageBoxDialog" Height="130" Width="225">
+        Title="MessageBoxDialog" Height="125" Width="275">
     <Grid>
-        <StackPanel>
-            <TextBlock x:Name="MessageBox" Text="Your input" Height="30" />
-            <TextBox x:Name="ResponseTextBox" Height="30" />
-            <Button Content="OK" Click="OKButton_Click" Height="30" />
-        </StackPanel>
+        <VirtualizingStackPanel>
+            <TextBlock x:Name="MessageBox" Text="Your input" TextWrapping="Wrap" Height="30" Margin="10,0,10,0"/>
+            <TextBox x:Name="ResponseTextBox" Height="25" VerticalAlignment="Center" HorizontalAlignment="Center" Width="255" />
+            <Button Content="OK" IsDefault="True" Click="OKButton_Click" HorizontalAlignment="Center" Width="255" Height="25" VerticalAlignment="Center" />
+        </VirtualizingStackPanel>
     </Grid>
 </Window>

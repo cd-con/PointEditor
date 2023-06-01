@@ -1,0 +1,108 @@
+﻿using System;
+using System.Linq;
+using System.Text;
+using System.Windows;
+using System.Windows.Media;
+
+namespace PointEditor.Utility
+{
+    /// <summary>
+    /// Вспомогательные методы
+    /// </summary>
+    static class Methods
+    {
+        /// <summary>
+        /// Найти сумму двух точек.
+        /// </summary>
+        /// <param name="point">Исходная точка</param>
+        /// <param name="newPoint">Смещение</param>
+        /// <returns>Смещённая точка</returns>
+        private static Point Sum(this Point point, Point newPoint) => new Point(point.X + newPoint.X, point.Y + newPoint.Y);
+        
+        /// <summary>
+        /// Умножает точку на значение.
+        /// </summary>
+        /// <param name="point">Исходная точка</param>
+        /// <param name="factor">Множитель</param>
+        /// <returns>Смещённая точка</returns>
+        public static Point Scale(this Point point, double factor) => new Point(point.X * factor, point.Y * factor);
+        
+        /// <summary>
+        /// Конвертирует градусы в радианы.
+        /// </summary>
+        /// <param name="angle">Исходный угол</param>
+        /// <returns>Угол в радианах</returns>
+        public static double ToRadians(this double angle) => ((Math.PI / 180) * angle);
+
+        /// <summary>
+        /// Увеличивает фигуру в размерах. Не сохраняет исходную точку и смещает фигуру.
+        /// </summary>
+        /// <param name="points">Коллекция точек фигуры</param>
+        /// <param name="factor">Множитель</param>
+        public static void ResizePolygon(PointCollection points, double factor)
+        {
+            for (int pointID = 0; pointID < points.Count; pointID++)
+                points[pointID] = points[pointID].Scale(factor);
+        }
+
+        /// <summary>
+        /// Смещает фигуру по координатам.
+        /// </summary>
+        /// <param name="points">Коллекция точек фигуры</param>
+        /// <param name="x">Смещение по горизонтали</param>
+        /// <param name="y">Смещение по вертикали</param>
+        public static void MovePolygon(PointCollection points, int x, int y)
+        {
+            for (int pointID = 0; pointID < points.Count; pointID++)
+                points[pointID] = points[pointID].Sum(new(x, y));
+        }
+
+        /// <summary>
+        /// Сглаживание фигуры при помощи кубической интерполяции.
+        /// </summary>
+        /// <param name="points">Коллекция точек фигуры</param>
+        /// <param name="quality">Качество итоговой фигуры</param>
+        /// <returns>Новая коллекция точек фигуры</returns>        
+        public static PointCollection SmootherPolygonCubic(PointCollection points, int quality)
+        {
+            double[] xs = points.Select(x => x.X).ToArray();
+            double[] ys = points.Select(x => x.Y).ToArray();
+            (double[] xs_res, double[] ys_res) = Interopolation.Cubic.InterpolateXY(xs, ys, quality);
+            
+            PointCollection res = new PointCollection();
+            for (int i = 0; i < xs_res.Length; i++)
+            {
+                res.Add(new(xs_res[i], ys_res[i]));
+            }
+
+            return res;
+        }
+
+        /// <summary>
+        /// Конвертирование строки в массив байт.
+        /// </summary>
+        /// <param name="hex">Строка, содержащая число в шестнадцатиричной системе счисления</param>
+        /// <returns>Массив байтов, представляющих исходное число</returns>
+        public static byte[] StringToByteArray(string hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
+        }
+
+        /// <summary>
+        /// Конвертирование массива байт в строку.
+        /// </summary>
+        /// <param name="bytes">Массив байт, представляющих число в шестнадцатиричной системе счисления</param>
+        /// <returns>Строка, содержащая исходное число</returns>
+        public static string ByteArrayToString(byte[] bytes)
+        {
+            StringBuilder hex = new StringBuilder(bytes.Length * 2);
+            foreach (byte b in bytes)
+                hex.AppendFormat("{0:x2}", b);
+            return hex.ToString();
+        }
+
+    }
+}

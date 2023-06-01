@@ -33,14 +33,14 @@
                             <ColumnDefinition Width="211*"/>
                             <ColumnDefinition Width="125*"/>
                         </Grid.ColumnDefinitions>
-                        <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click="Button_Click" Grid.ColumnSpan="3"/>
-                        <Button Content="Удалить" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Click="Button_Click_1" Grid.ColumnSpan="3" Width="106"/>
+                        <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click="PolygonAdd_Click" Grid.ColumnSpan="3"/>
+                        <Button Content="Удалить" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Click="DeleteItems" Grid.ColumnSpan="3" Width="106"/>
                         <TextBox VerticalScrollBarVisibility="Visible" x:Name="output" Margin="89,135,10,57" TextWrapping="Wrap" Text="Вывод" Grid.Column="2" Grid.ColumnSpan="2"/>
-                        <Button Content="Получить точки" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Click="Button_Click_2" Grid.ColumnSpan="3" Width="106"/>
+                        <Button Content="Получить точки" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Click="GenerateCode" Grid.ColumnSpan="3" Width="106"/>
                         <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="10,85,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Scale_Click"/>
                         <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Move_Click"/>
                         <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="10,135,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Smooth_Click"/>
-                        <ListBox x:Name="PolygonList" Grid.Column="2" MouseDoubleClick="PolygonList_MouseDoubleClick"  SelectionChanged="PolygonList_Selected" Margin="89,10,10,0" Grid.ColumnSpan="2" Height="120" VerticalAlignment="Top">
+                        <ListBox SelectionMode="Extended" x:Name="PolygonList" Grid.Column="2" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="89,10,10,0" Grid.ColumnSpan="2" Height="120" VerticalAlignment="Top">
                             <!--<ListBox.CommandBindings>
                                 <CommandBinding Command="Deselect" Executed="ClearPolygonListSelection"/>
                             </ListBox.CommandBindings>

@@ -48,6 +48,7 @@
                                 <KeyBinding Key="Esc" Command="Deselect"/>
                             </ListBox.InputBindings>-->
                         </ListBox>
+                        <Button x:Name="revertAction" Content="Откатить (0)" Grid.ColumnSpan="3" HorizontalAlignment="Left" Height="20" Margin="10,160,0,0" VerticalAlignment="Top" Width="106" Click="revertAction_Click"/>
                     </Grid>
                 </GroupBox>
             </Grid>

@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -19,8 +20,14 @@ namespace PointEditor
     public partial class MainWindow : Window
     {
         public List<Polygon> polygons = new List<Polygon>();
+        private int actionRevertCounter;
+        public List<Polygon>[] actionRevertList = new List<Polygon>[10]; // Хранилще наших действий
         public Color PenColor = new();
         public SolidColorBrush StrokeBrush = new();
+
+        bool bypassNoPointsWarning = false;
+        bool bypassIncorrectMoveInputWarning = false;
+        bool bypassNamingWarning = false;
 
         public MainWindow()
         {
@@ -79,6 +86,11 @@ namespace PointEditor
         private void PolygonAdd_Click(object sender, RoutedEventArgs e)
         {
             Polygon newPolygon = new Polygon { Stroke = StrokeBrush, StrokeThickness = 3, Name = $"newPolygon{polygons.Count}" };
+
+            actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { newPolygon });
+            AddCounter();
+            UpdateCounterDisplay();
+
             polygons.Add(newPolygon);
             PolygonList.SelectedItem = newPolygon.Name;
             mainCanvas.Children.Add(newPolygon);
@@ -143,9 +155,26 @@ namespace PointEditor
             if (dialog.ShowDialog() == true && dialog.ResponseText.Count() > 0)
             {
                 string result = dialog.ResponseText.Replace(' ', '_');
+
+                if (result.Length > 16 && !bypassNamingWarning) 
+                {
+                    Utility.Dialogs.ExceptionDialog exDialog = new("Предупреждение", $"Рекомендуем укоротить название до 16 символов и меньше.");
+                    if (exDialog.ShowDialog() == true && exDialog.isCancelled)
+                    {
+                        PolygonList_MouseDoubleClick(null,null);
+                        return;
+                    }
+                    bypassNamingWarning = exDialog.BypassDialog;
+                }
+
                 Polygon[] occurences = polygons.Where(x => x.Name == dialog.ResponseText).ToArray();
+                                
                 if (occurences.Length > 0)
                     result += occurences.Length;
+
+                // Сохраняем действе для отката
+                actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { selected });
+
                 PolygonList.SelectedItem = result;
                 selected.Name = result;
                 UpdateList();
@@ -160,15 +189,49 @@ namespace PointEditor
             {
                 if (PolygonList.SelectedItem != null)
                 {
+                    // Храним все объекты
+                    List<Polygon> revertItems = new List<Polygon>();
+
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
                         Polygon poly = polygons.Where(x => x.Name == itemName).Single();
-                        // Проверяем, совпадает ли последняя точка с начальной
-                        if (poly.Points.Last() != poly.Points[0])
-                            // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
-                            poly.Points.Add(poly.Points[0]);
-                        // Сглаживаем
-                        poly.Points = Utility.Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
+
+                        // Проверяем, есть ли в фигуре точки
+                        if (poly.Points.Count > 0)
+                        {
+                            revertItems.Add(poly); // Добавляем в список отката
+
+                            // Проверяем, совпадает ли последняя точка с начальной
+                            if (poly.Points.Last() != poly.Points[0])
+                                // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
+                                poly.Points.Add(poly.Points[0]);
+                            // Сглаживаем
+                            poly.Points = Utility.Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
+                        }
+                        else
+                        {
+                            if (!bypassNoPointsWarning)
+                            {
+                                Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Попытка сглаживания фигуры {itemName} не удалась. Количество точек в фигуре должно быть больше 0");
+                                if (exDialog.ShowDialog() == true && exDialog.isCancelled)
+                                {
+                                    // Логика отката действий
+                                    actionRevertList = Utility.Methods.Shift(actionRevertList, revertItems);
+                                    AddCounter();
+                                    doRevert();
+                                    UpdateCounterDisplay();
+                                    /*foreach (string revertItemName in PolygonList.SelectedItems)
+                                    {
+                                        if ()
+                                    }*/
+
+                                    return;
+                                }
+                                bypassNoPointsWarning = exDialog.BypassDialog;
+                            }
+                        }
+                        // Сохраняем действе для отката
+                        actionRevertList = Utility.Methods.Shift(actionRevertList, revertItems);
                     }
                 }
             }
@@ -180,7 +243,7 @@ namespace PointEditor
             if (dialog.ShowDialog() == true)
             {
                 string[] coords = dialog.ResponseText.Split(';');
-                if (int.TryParse(coords[0], out int x) && int.TryParse(coords[1], out int y))
+                if (coords.Length == 2 && int.TryParse(coords[0], out int x) && int.TryParse(coords[1], out int y))
                 {
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
@@ -188,11 +251,41 @@ namespace PointEditor
                         Utility.Methods.MovePolygon(poly.Points, x, y);
                     }
                 }
-                else if(dialog.ResponseText.Length > 0)
+                else if(dialog.ResponseText.Length > 0 && !bypassIncorrectMoveInputWarning)
                 {
-                    MessageBox.Show("Неверный ввод.\nИспользуйте маску:\n(-)горизонталь;(-)вертикаль", "Ошибка смещения");
+                    Utility.Dialogs.ExceptionDialog exDialog = new("Ошибка смещения", $"Неверный ввод.\nИспользуйте маску:\n(-)горизонталь;(-)вертикаль");
+                    exDialog.ShowDialog();
                 }
             }
+        }
+
+        private void revertAction_Click(object sender, RoutedEventArgs e)
+        {
+            doRevert();
+        }
+
+        private void AddCounter() => actionRevertCounter += actionRevertCounter <= 10 ? 1 : 0;
+
+        private void UpdateCounterDisplay()
+        {
+            revertAction.Content = $"Откатить ({actionRevertCounter})";
+        }
+
+        private void doRevert()
+        {
+            if (actionRevertCounter == 0)
+            {
+                MessageBox.Show("Нечего отменять!");
+            }
+            else
+            {
+                actionRevertCounter--;
+                var action = actionRevertList[actionRevertList.Length - actionRevertCounter - 1];
+                // Not implemented
+                //polygons.Concat(action);
+            }
+            UpdateCounterDisplay();
+            UpdateList();
         }
     } 
 }

@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace PointEditor.Utility
@@ -33,6 +36,26 @@ namespace PointEditor.Utility
         /// <param name="angle">Исходный угол</param>
         /// <returns>Угол в радианах</returns>
         public static double ToRadians(this double angle) => ((Math.PI / 180) * angle);
+
+        /// <summary>
+        /// Превращает безопасным способом bool? в bool.
+        /// Если bool? == null, возвращает false
+        /// </summary>
+        /// <param name="value">Исходное значение</param>
+        /// <returns>Исходное значение bool? конвертированное в bool</returns>
+        public static bool NotNullBool(this bool? value) => value == null ? false : (bool)value;
+
+        public static T[] Shift<T>(this T[] arr, T newObject)
+        {
+            for (int i = 1; i < arr.Length; i++)
+            {
+                arr[i - 1] = arr[i];
+            }
+
+            arr[arr.Length - 1] = newObject;
+
+            return arr;
+        }
 
         /// <summary>
         /// Увеличивает фигуру в размерах. Не сохраняет исходную точку и смещает фигуру.

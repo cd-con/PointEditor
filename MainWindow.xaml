@@ -7,8 +7,11 @@
         mc:Ignorable="d"
         Title="Point editor" Height="450" Width="800">
     <Grid>
-        <GroupBox Header="Canvas" Margin="0,0,405,0">
-            <Canvas x:Name="mainCanvas" MouseDown="mainCanvas_MouseDown" Background="#FF949494"/>
+        <GroupBox Header="Поле для рисования" Margin="0,0,405,0">
+            <!-- Надо.. -->
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <Canvas x:Name="mainCanvas" MouseDown="mainCanvas_MouseDown" Background="#FF949494"/>
+            </ScrollViewer>
         </GroupBox>
         <GroupBox Header="Параметры" Margin="0,0,0,10" HorizontalAlignment="Right" Width="400">
             <Grid>
@@ -16,7 +19,7 @@
                     <RowDefinition Height="290*"/>
                     <RowDefinition Height="111*"/>
                 </Grid.RowDefinitions>
-                <GroupBox Header="Цвет карандаша (Не влияет на результат)" Height="156" VerticalAlignment="Top">
+                <GroupBox Header="Цвет карандаша" Height="156" VerticalAlignment="Top">
                     <Grid>
                         <Slider x:Name="R" Margin="15,28,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
                         <Slider x:Name="G" Margin="15,51,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>

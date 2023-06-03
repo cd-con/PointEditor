@@ -1,12 +1,10 @@
-﻿using System;
+﻿using PointEditor.Utility;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -19,13 +17,13 @@ namespace PointEditor
 
     public partial class MainWindow : Window
     {
-        public List<Polygon> polygons = new List<Polygon>();
+        public static MainWindow instance;
+        public List<Polygon> polygons = new();
         private int actionRevertCounter;
         
         // TODO Переделать в словарь
         public List<Polygon>[] actionRevertList = new List<Polygon>[10]; // Хранилще наших действий
         public Color PenColor = new();
-        public SolidColorBrush StrokeBrush = new();
 
         bool bypassNoPointsWarning = false;
         bool bypassIncorrectMoveInputWarning = false;
@@ -33,10 +31,12 @@ namespace PointEditor
 
         public MainWindow()
         {
-            InitializeComponent();            
+            InitializeComponent();
+            instance = this;
+            ColorPicker_HEX.Text = "#696969";
         }
 
-        private void UpdateList()
+        public void UpdateList()
         {
             PolygonList.ItemsSource = polygons.Select(x => x.Name);
         }
@@ -48,7 +48,7 @@ namespace PointEditor
 
             if (regexMatch.Success)
             {
-                byte[] hexColors = Utility.Methods.StringToByteArray(regexMatch.Value);
+                byte[] hexColors = Methods.StringToByteArray(regexMatch.Value);
 
                 PenColor.R = hexColors[0];
                 R.Value = Convert.ToInt32(PenColor.R);
@@ -60,9 +60,11 @@ namespace PointEditor
                 B.Value = Convert.ToInt32(PenColor.B);
 
                 PenColor.A = 0xFF;
-                Preview.Fill = new SolidColorBrush(PenColor);
 
-                StrokeBrush.Color = PenColor;
+                
+                Preview.Fill = new SolidColorBrush(PenColor);
+                // Костыли
+                Palette.currentBrush.Color = PenColor;
             }
         }
 
@@ -80,23 +82,34 @@ namespace PointEditor
                 default:
                     throw new NotImplementedException();
             }
-            ColorPicker_HEX.Text = $"#{Utility.Methods.ByteArrayToString(new byte[] { PenColor.R, PenColor.G, PenColor.B })}";
+            ColorPicker_HEX.Text = $"#{Methods.ByteArrayToString(new byte[] { PenColor.R, PenColor.G, PenColor.B })}";
+            
         }
 
 
         // Add new polygon
         private void PolygonAdd_Click(object sender, RoutedEventArgs e)
         {
-            Polygon newPolygon = new Polygon { Stroke = StrokeBrush, StrokeThickness = 3, Name = $"newPolygon{polygons.Count}" };
+            Polygon newPolygon = new Polygon
+            {
+                // Временное решение
+                Stroke = Palette.currentBrush,
+                StrokeThickness = 3,
+                Name = $"newPolygon{polygons.Count}"
+            };
 
-            actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { newPolygon });
-            AddCounter();
-            UpdateCounterDisplay();
+            // Логика отката
+            //actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { newPolygon });
+            //AddCounter();
+            //UpdateCounterDisplay();
 
             polygons.Add(newPolygon);
-            PolygonList.SelectedItem = newPolygon.Name;
+            
             mainCanvas.Children.Add(newPolygon);
+
             UpdateList();
+
+            PolygonList.SelectedItem = newPolygon.Name;
         }
 
         private void DeleteItems(object sender, RoutedEventArgs e)
@@ -112,11 +125,6 @@ namespace PointEditor
 
         private void mainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (StrokeBrush.Color == Colors.Transparent)
-            {
-                // ♿♿♿
-                ColorPicker_HEX.Text = "#696969";
-            }
             if (e.ButtonState == MouseButtonState.Pressed && PolygonList.SelectedItem != null)
                 polygons.Where(x => x.Name == PolygonList.SelectedItem).Single().Points.Add(e.GetPosition(this));
         }
@@ -127,6 +135,8 @@ namespace PointEditor
             output.Text += "// Скопируй эти значения в свой код\n";
             foreach (Polygon poly in polygons)
             {
+                
+                output.Text += $"// Фигура {poly.Name}\nPolygon {poly.Name} = new();\n{poly.Name}.Stroke = Color.FromRgb({Palette.currentBrush.Color.R}, {Palette.currentBrush.Color.G}, {Palette.currentBrush.Color.B});\n\n";
                 foreach (Point point in poly.Points)
                 {
                     output.Text += $"{poly.Name}.Points.Add(new Point({point.X},{point.Y}));\n";
@@ -137,14 +147,14 @@ namespace PointEditor
 
         private void Scale_Click(object sender, RoutedEventArgs e)
         {
-            MessageBoxDialog dialog = new MessageBoxDialog("Изменить размер", "Фактор изменения размера");
+            MessageBoxDialog dialog = new("Изменить размер", "Фактор изменения размера");
             if (dialog.ShowDialog() == true)
             {
-                if (double.TryParse(dialog.ResponseText, out double rescale_factor))
+                if (double.TryParse(dialog.ResponseText.Replace('.', ','), out double rescale_factor))
                 {
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
-                        Utility.Methods.ResizePolygon(polygons.Where(x => x.Name == itemName).Single().Points, rescale_factor);
+                        Methods.ResizePolygon(polygons.Where(x => x.Name == itemName).Single().Points, rescale_factor);
                     }
                 }
             }
@@ -152,47 +162,50 @@ namespace PointEditor
 
         private void PolygonList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Polygon selected = polygons.Where(x => x.Name == PolygonList.SelectedItem).Single();
-            MessageBoxDialog dialog = new MessageBoxDialog("Переименовать", $"{selected.Name} будет переименован в");
-            if (dialog.ShowDialog() == true && dialog.ResponseText.Count() > 0)
+            if (PolygonList.SelectedItems.Count > 0)
             {
-                string result = dialog.ResponseText.Replace(' ', '_');
-
-                if (result.Length > 16 && !bypassNamingWarning) 
+                Polygon selected = polygons.Where(x => x.Name == PolygonList.SelectedItem).Single();
+                MessageBoxDialog dialog = new MessageBoxDialog("Переименовать", $"{selected.Name} будет переименован в");
+                if (dialog.ShowDialog() == true && dialog.ResponseText.Count() > 0)
                 {
-                    Utility.Dialogs.ExceptionDialog exDialog = new("Предупреждение", $"Рекомендуем укоротить название до 16 символов и меньше.");
-                    if (exDialog.ShowDialog() == true && exDialog.isCancelled)
+                    string result = dialog.ResponseText.Replace(' ', '_');
+
+                    if (result.Length > 16 && !bypassNamingWarning)
                     {
-                        PolygonList_MouseDoubleClick(null,null);
-                        return;
+                        Utility.Dialogs.ExceptionDialog exDialog = new("Предупреждение", $"Рекомендуем укоротить название до 16 символов и меньше.");
+                        if (exDialog.ShowDialog() == true && exDialog.isCancelled)
+                        {
+                            PolygonList_MouseDoubleClick(null, null);
+                            return;
+                        }
+                        bypassNamingWarning = exDialog.BypassDialog;
                     }
-                    bypassNamingWarning = exDialog.BypassDialog;
+
+                    Polygon[] occurences = polygons.Where(x => x.Name == dialog.ResponseText).ToArray();
+
+                    if (occurences.Length > 0)
+                        result += occurences.Length;
+
+                    // Сохраняем действе для отката
+                    actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { selected });
+
+                    PolygonList.SelectedItem = result;
+                    selected.Name = result;
+                    UpdateList();
                 }
-
-                Polygon[] occurences = polygons.Where(x => x.Name == dialog.ResponseText).ToArray();
-                                
-                if (occurences.Length > 0)
-                    result += occurences.Length;
-
-                // Сохраняем действе для отката
-                actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { selected });
-
-                PolygonList.SelectedItem = result;
-                selected.Name = result;
-                UpdateList();
             }
         }
 
         private void Smooth_Click(object sender, RoutedEventArgs e)
         {
             // Oh boy, here we go
-            MessageBoxDialog dialog = new MessageBoxDialog("Смягчить", "Введите значение (больше - дольше)");
+            MessageBoxDialog dialog = new("Смягчить", "Введите значение (больше - дольше)");
             if (dialog.ShowDialog() == true && int.TryParse(dialog.ResponseText, out int smooth_factor))
             {
                 if (PolygonList.SelectedItem != null)
                 {
                     // Храним все объекты
-                    List<Polygon> revertItems = new List<Polygon>();
+                    List<Polygon> revertItems = new();
 
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
@@ -220,7 +233,7 @@ namespace PointEditor
                                     // Логика отката действий
                                     actionRevertList = Utility.Methods.Shift(actionRevertList, revertItems);
                                     AddCounter();
-                                    doRevert();
+                                    DoRevert();
                                     UpdateCounterDisplay();
                                     /*foreach (string revertItemName in PolygonList.SelectedItems)
                                     {
@@ -233,7 +246,7 @@ namespace PointEditor
                             }
                         }
                         // Сохраняем действе для отката
-                        actionRevertList = Utility.Methods.Shift(actionRevertList, revertItems);
+                        //actionRevertList = Methods.Shift(actionRevertList, revertItems);
                     }
                 }
             }
@@ -250,20 +263,21 @@ namespace PointEditor
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
                         Polygon poly = polygons.Where(x => x.Name == itemName).Single();
-                        Utility.Methods.MovePolygon(poly.Points, x, y);
+                        Methods.MovePolygon(poly.Points, x, y);
                     }
                 }
                 else if(dialog.ResponseText.Length > 0 && !bypassIncorrectMoveInputWarning)
                 {
                     Utility.Dialogs.ExceptionDialog exDialog = new("Ошибка смещения", $"Неверный ввод.\nИспользуйте маску:\n(-)горизонталь;(-)вертикаль");
                     exDialog.ShowDialog();
+                    bypassIncorrectMoveInputWarning = exDialog.BypassDialog;
                 }
             }
         }
 
         private void revertAction_Click(object sender, RoutedEventArgs e)
         {
-            doRevert();
+            DoRevert();
         }
 
         private void AddCounter() => actionRevertCounter += actionRevertCounter <= 10 ? 1 : 0;
@@ -273,7 +287,7 @@ namespace PointEditor
             revertAction.Content = $"Откатить ({actionRevertCounter})";
         }
 
-        private void doRevert()
+        private void DoRevert()
         {
             if (actionRevertCounter == 0)
             {
@@ -289,5 +303,5 @@ namespace PointEditor
             UpdateCounterDisplay();
             UpdateList();
         }
-    } 
+    }
 }

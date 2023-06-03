@@ -21,6 +21,8 @@ namespace PointEditor
     {
         public List<Polygon> polygons = new List<Polygon>();
         private int actionRevertCounter;
+        
+        // TODO Переделать в словарь
         public List<Polygon>[] actionRevertList = new List<Polygon>[10]; // Хранилще наших действий
         public Color PenColor = new();
         public SolidColorBrush StrokeBrush = new();

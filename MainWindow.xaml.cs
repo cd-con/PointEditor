@@ -136,10 +136,10 @@ namespace PointEditor
             foreach (Polygon poly in polygons)
             {
                 
-                output.Text += $"// Фигура {poly.Name}\nPolygon {poly.Name} = new();\n{poly.Name}.Stroke = Color.FromRgb({Palette.currentBrush.Color.R}, {Palette.currentBrush.Color.G}, {Palette.currentBrush.Color.B});\n\n";
+                output.Text += $"// Фигура {poly.Name}\nPolygon {poly.Name} = new();\n{poly.Name}.Stroke = new SolidColorBrush() " + "{ Color = Color.FromRgb(" + Palette.currentBrush.Color.R + ", " + Palette.currentBrush.Color.G + ", " + Palette.currentBrush.Color.B + ")};\n\n";
                 foreach (Point point in poly.Points)
                 {
-                    output.Text += $"{poly.Name}.Points.Add(new Point({point.X},{point.Y}));\n";
+                    output.Text += $"{poly.Name}.Points.Add(new Point({Math.Round(point.X, 2).ToString().Replace(',','.')},{Math.Round(point.Y, 2).ToString().Replace(',', '.')}));\n";
                 }
                 output.Text += "\n\n";
             }

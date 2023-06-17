@@ -70,20 +70,21 @@ namespace PointEditor
 
         private void Slider_ValueChanged(object sender, object _)
         {
-            Slider slider = sender as Slider;
-            switch (slider.Name)
+            if (sender is Slider slider)
             {
-                case "R":
-                    PenColor.R = Convert.ToByte(R.Value); break;
-                case "G":
-                    PenColor.G = Convert.ToByte(G.Value); break;
-                case "B":
-                    PenColor.B = Convert.ToByte(B.Value); break;
-                default:
-                    throw new NotImplementedException();
+                switch (slider.Name)
+                {
+                    case "R":
+                        PenColor.R = Convert.ToByte(R.Value); break;
+                    case "G":
+                        PenColor.G = Convert.ToByte(G.Value); break;
+                    case "B":
+                        PenColor.B = Convert.ToByte(B.Value); break;
+                    default:
+                        throw new NotImplementedException();
+                }
+                ColorPicker_HEX.Text = $"#{Methods.ByteArrayToString(new byte[] { PenColor.R, PenColor.G, PenColor.B })}";
             }
-            ColorPicker_HEX.Text = $"#{Methods.ByteArrayToString(new byte[] { PenColor.R, PenColor.G, PenColor.B })}";
-            
         }
 
 
@@ -131,36 +132,50 @@ namespace PointEditor
 
         private void GenerateCode(object sender, RoutedEventArgs e)
         {
-            output.Clear();
-            output.Text += "// Скопируй эти значения в свой код\n";
+            string result = "// Скопируй эти значения в свой код\n";
+
+            if (polygons.Count == 0)
+            {
+                MessageBox.Show("Для генерации кода на сцене необходим минимум один полигон", "Отмена");
+                return;
+            }
+                
             foreach (Polygon poly in polygons)
             {
-                
-                output.Text += $"// Фигура {poly.Name}\nPolygon {poly.Name} = new();\n{poly.Name}.Stroke = new SolidColorBrush() " + "{ Color = Color.FromRgb(" + Palette.currentBrush.Color.R + ", " + Palette.currentBrush.Color.G + ", " + Palette.currentBrush.Color.B + ")};\n\n";
+                if (poly.Points.Count == 0)
+                {
+                    result += $"// {poly.Name} был пропущен - в фигуре нет точек";
+                    continue;
+                }
+
+                result += $"// Фигура {poly.Name}\nPolygon {poly.Name} = new();\n{poly.Name}.Stroke = new SolidColorBrush() " + "{ Color = Color.FromRgb(" + Palette.currentBrush.Color.R + ", " + Palette.currentBrush.Color.G + ", " + Palette.currentBrush.Color.B + ")};\n\n";
                 foreach (Point point in poly.Points)
                 {
-                    output.Text += $"{poly.Name}.Points.Add(new Point({Math.Round(point.X, 2).ToString().Replace(',','.')},{Math.Round(point.Y, 2).ToString().Replace(',', '.')}));\n";
+                    result += $"{poly.Name}.Points.Add(new Point({Math.Round(point.X, 2).ToString().Replace(',','.')},{Math.Round(point.Y, 2).ToString().Replace(',', '.')}));\n";
                 }
-                output.Text += "\n\n";
+
+                result += "\n\n";
             }
+            Clipboard.SetText(result);
+            MessageBox.Show("Код успешно скопирован в буфер обмена", "Код скопирован");
         }
 
         private void Scale_Click(object sender, RoutedEventArgs e)
         {
             MessageBoxDialog dialog = new("Изменить размер", "Фактор изменения размера");
-            if (dialog.ShowDialog() == true)
+            if (dialog.ShowDialog() == true && double.TryParse(dialog.ResponseText.Replace('.', ','), out double rescale_factor))
             {
-                if (double.TryParse(dialog.ResponseText.Replace('.', ','), out double rescale_factor))
-                {
-                    foreach (string itemName in PolygonList.SelectedItems)
-                    {
-                        Methods.ResizePolygon(polygons.Where(x => x.Name == itemName).Single().Points, rescale_factor);
-                    }
-                }
+                foreach (string itemName in PolygonList.SelectedItems)
+                    polygons.Where(x => x.Name == itemName).Single().Points.Rescale(rescale_factor);
             }
         }
 
         private void PolygonList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            Rename();
+        }
+
+        private void Rename()
         {
             if (PolygonList.SelectedItems.Count > 0)
             {
@@ -175,7 +190,7 @@ namespace PointEditor
                         Utility.Dialogs.ExceptionDialog exDialog = new("Предупреждение", $"Рекомендуем укоротить название до 16 символов и меньше.");
                         if (exDialog.ShowDialog() == true && exDialog.isCancelled)
                         {
-                            PolygonList_MouseDoubleClick(null, null);
+                            Rename();
                             return;
                         }
                         bypassNamingWarning = exDialog.BypassDialog;
@@ -187,7 +202,7 @@ namespace PointEditor
                         result += occurences.Length;
 
                     // Сохраняем действе для отката
-                    actionRevertList = Utility.Methods.Shift(actionRevertList, new List<Polygon>() { selected });
+                    // actionRevertList = Methods.Shift(actionRevertList, new List<Polygon>() { selected });
 
                     PolygonList.SelectedItem = result;
                     selected.Name = result;
@@ -221,7 +236,7 @@ namespace PointEditor
                                 // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
                                 poly.Points.Add(poly.Points[0]);
                             // Сглаживаем
-                            poly.Points = Utility.Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
+                            poly.Points = Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
                         }
                         else
                         {
@@ -231,22 +246,11 @@ namespace PointEditor
                                 if (exDialog.ShowDialog() == true && exDialog.isCancelled)
                                 {
                                     // Логика отката действий
-                                    actionRevertList = Utility.Methods.Shift(actionRevertList, revertItems);
-                                    AddCounter();
-                                    DoRevert();
-                                    UpdateCounterDisplay();
-                                    /*foreach (string revertItemName in PolygonList.SelectedItems)
-                                    {
-                                        if ()
-                                    }*/
-
-                                    return;
                                 }
                                 bypassNoPointsWarning = exDialog.BypassDialog;
                             }
                         }
                         // Сохраняем действе для отката
-                        //actionRevertList = Methods.Shift(actionRevertList, revertItems);
                     }
                 }
             }

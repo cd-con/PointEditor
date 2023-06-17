@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace PointEditor.Utility
@@ -29,7 +26,17 @@ namespace PointEditor.Utility
         /// <param name="factor">Множитель</param>
         /// <returns>Смещённая точка</returns>
         public static Point Scale(this Point point, double factor) => new Point(point.X * factor, point.Y * factor);
-        
+
+        /// <summary>
+        /// Делит точку на значение.
+        /// </summary>
+        /// <param name="point">Исходная точка</param>
+        /// <param name="factor">Множитель</param>
+        /// <returns>Смещённая точка</returns>
+        public static Point Shrink(this Point point, double factor) => new Point(point.X / factor, point.Y / factor);
+
+        public static Point GetCenter(PointCollection collection) => collection.Aggregate(new Point(0, 0), (current, point) => current.Sum(point)).Shrink(collection.Count);
+
         /// <summary>
         /// Конвертирует градусы в радианы.
         /// </summary>
@@ -69,15 +76,48 @@ namespace PointEditor.Utility
         }
 
         /// <summary>
+        /// Увеличивает точку с сохранением центра.
+        /// </summary>
+        /// <param name="point">Исходная точка</param>
+        /// <param name="factor">Множитель</param>
+        /// <returns>Смещённая точка</returns>
+        public static void Rescale(this PointCollection collection, double factor)
+        {
+            // Ищем исходный центр
+            Point oldCenter = GetCenter(collection);
+
+            // Бегаем по всем точкам
+            ResizePolygon(collection, factor);
+
+            // Ищем новый центр
+            Point newCenter = GetCenter(collection);
+            Point offset = (Point)(oldCenter - newCenter);
+
+            // Смещаем
+            collection.Move(offset);
+        }
+
+        /// <summary>
         /// Смещает фигуру по координатам.
         /// </summary>
         /// <param name="points">Коллекция точек фигуры</param>
         /// <param name="x">Смещение по горизонтали</param>
         /// <param name="y">Смещение по вертикали</param>
+        [Obsolete("Метод более не имеет смысла в применении. Используйте PointCollection.Move(Point offset)")]
         public static void MovePolygon(PointCollection points, int x, int y)
         {
             for (int pointID = 0; pointID < points.Count; pointID++)
                 points[pointID] = points[pointID].Sum(new(x, y));
+        }
+
+        /// <summary>
+        /// Смещает фигуру по координатам.
+        /// </summary>
+        /// <param name="offset">Смещение</param>
+        public static void Move(this PointCollection points, Point offset)
+        {
+            for (int pointID = 0; pointID < points.Count; pointID++)
+                points[pointID] = points[pointID].Sum(offset);
         }
 
         /// <summary>

@@ -5,45 +5,34 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PointEditor"
         mc:Ignorable="d"
-        Title="Point editor" Height="450" Width="800">
+        Title="Point editor" Height="600" Width="800">
     <Grid>
-        <GroupBox Header="Поле для рисования" Margin="0,0,405,0">
+        <GroupBox Header="Поле для рисования" Margin="0,0,303,0">
             <!-- Надо.. -->
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <Canvas x:Name="mainCanvas" MouseDown="mainCanvas_MouseDown" Background="#FF949494"/>
             </ScrollViewer>
         </GroupBox>
-        <GroupBox Header="Параметры" Margin="0,0,0,10" HorizontalAlignment="Right" Width="400">
+        <GroupBox Header="Параметры" Margin="0,0,0,10" HorizontalAlignment="Right" Width="298">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="290*"/>
-                    <RowDefinition Height="111*"/>
-                </Grid.RowDefinitions>
-                <GroupBox Header="Цвет карандаша" Height="156" VerticalAlignment="Top">
+                <GroupBox Header="Цвет карандаша" Height="115" VerticalAlignment="Top">
                     <Grid>
-                        <Slider x:Name="R" Margin="15,28,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
-                        <Slider x:Name="G" Margin="15,51,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
-                        <Slider x:Name="B" Margin="15,74,241,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged"/>
-                        <TextBox x:Name="ColorPicker_HEX" Margin="15,112,241,0" TextWrapping="Wrap" Text="HEX" VerticalAlignment="Top" TextChanged="ColorPicker_HEX_TextChanged"/>
-                        <Rectangle x:Name="Preview" Stroke="Black" Margin="226,28,0,0" RenderTransformOrigin="0.47,0.593" Height="102" VerticalAlignment="Top" HorizontalAlignment="Left" Width="109"/>
+                        <Slider x:Name="R" Margin="13,15,0,0" VerticalAlignment="Top" Maximum="255" ValueChanged="Slider_ValueChanged" HorizontalAlignment="Left" Width="120"/>
+                        <Slider x:Name="G" Margin="13,0,0,0" Maximum="255" ValueChanged="Slider_ValueChanged" HorizontalAlignment="Left" Width="120" Height="18" VerticalAlignment="Center"/>
+                        <Slider x:Name="B" Margin="13,61,0,0" Maximum="255" ValueChanged="Slider_ValueChanged" HorizontalAlignment="Left" Width="120" Height="18" VerticalAlignment="Top"/>
+                        <TextBox x:Name="ColorPicker_HEX" Margin="144,61,0,0" TextWrapping="Wrap" Text="HEX" TextChanged="ColorPicker_HEX_TextChanged" HorizontalAlignment="Left" Width="120" Height="18" VerticalAlignment="Top"/>
+                        <Rectangle x:Name="Preview" Stroke="Black" Margin="144,15,0,0" RenderTransformOrigin="0.47,0.593" HorizontalAlignment="Left" Width="120" Height="32" VerticalAlignment="Top"/>
                     </Grid>
                 </GroupBox>
-                <GroupBox Header="Инструменты" Margin="0,166,0,0" Grid.RowSpan="2">
+                <GroupBox Header="Инструменты" Height="213" VerticalAlignment="Top" Margin="0,120,0,0">
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="12*"/>
-                            <ColumnDefinition Width="28*"/>
-                            <ColumnDefinition Width="211*"/>
-                            <ColumnDefinition Width="125*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click="PolygonAdd_Click" Grid.ColumnSpan="3"/>
-                        <Button Content="Удалить" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Click="DeleteItems" Grid.ColumnSpan="3" Width="106"/>
-                        <TextBox VerticalScrollBarVisibility="Visible" x:Name="output" Margin="89,135,10,57" TextWrapping="Wrap" Text="Вывод" Grid.Column="2" Grid.ColumnSpan="2"/>
-                        <Button Content="Получить точки" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Click="GenerateCode" Grid.ColumnSpan="3" Width="106"/>
-                        <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="10,85,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Scale_Click"/>
-                        <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Move_Click"/>
-                        <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="10,135,0,0" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="106" Click="Smooth_Click"/>
-                        <ListBox SelectionMode="Extended" x:Name="PolygonList" Grid.Column="2" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="89,10,10,0" Grid.ColumnSpan="2" Height="120" VerticalAlignment="Top">
+                        <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click="PolygonAdd_Click"/>
+                        <Button Content="Удалить" HorizontalAlignment="Left" Margin="10,35,0,0" VerticalAlignment="Top" Click="DeleteItems" Width="106"/>
+                        <Button Content="Получить точки" HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Click="GenerateCode" Width="106"/>
+                        <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="10,85,0,0" VerticalAlignment="Top" Width="106" Click="Scale_Click"/>
+                        <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="10,110,0,0" VerticalAlignment="Top" Width="106" Click="Move_Click"/>
+                        <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="10,135,0,0" VerticalAlignment="Top" Width="106" Click="Smooth_Click"/>
+                        <ListBox SelectionMode="Extended" x:Name="PolygonList" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="121,10,7,0" Height="170" VerticalAlignment="Top">
                             <!--<ListBox.CommandBindings>
                                 <CommandBinding Command="Deselect" Executed="ClearPolygonListSelection"/>
                             </ListBox.CommandBindings>
@@ -51,7 +40,7 @@
                                 <KeyBinding Key="Esc" Command="Deselect"/>
                             </ListBox.InputBindings>-->
                         </ListBox>
-                        <Button x:Name="revertAction" ToolTip="Эта функция находится в разработке!" Content="Откатить (0)" Grid.ColumnSpan="3" HorizontalAlignment="Left" Height="20" Margin="10,160,0,0" VerticalAlignment="Top" Width="106" Click="revertAction_Click" IsEnabled="False"/>
+                        <Button x:Name="revertAction" Visibility="Hidden" ToolTip="Эта функция находится в разработке!" Content="Откатить (0)" HorizontalAlignment="Left" Height="20" Margin="10,160,0,0" VerticalAlignment="Top" Width="106" Click="revertAction_Click" IsEnabled="False"/>
                     </Grid>
                 </GroupBox>
             </Grid>

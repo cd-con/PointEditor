@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:PointEditor.Utility.Dialogs"
         mc:Ignorable="d"
         ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
         Title="Exception" Height="150" Width="275">
     <Grid>
         <VirtualizingStackPanel>

@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:PointEditor"
         mc:Ignorable="d"
         ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
         Title="MessageBoxDialog" Height="125" Width="275">
     <Grid>
         <VirtualizingStackPanel>

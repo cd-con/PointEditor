@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,6 +24,7 @@ namespace PointEditor.Utility.Dialogs
         public ExceptionDialog(string caption = "Exception", string message = "An exception occured while trying to perform an operation.")
         {
             InitializeComponent();
+            SystemSounds.Beep.Play();
             Title = caption;
             MessageBox.Text = message;
         }

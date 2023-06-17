@@ -20,7 +20,7 @@ namespace PointEditor
         public static MainWindow instance;
         public List<Polygon> polygons = new();
         private int actionRevertCounter;
-        
+
         // TODO Переделать в словарь
         public List<Polygon>[] actionRevertList = new List<Polygon>[10]; // Хранилще наших действий
         public Color PenColor = new();
@@ -28,6 +28,7 @@ namespace PointEditor
         bool bypassNoPointsWarning = false;
         bool bypassIncorrectMoveInputWarning = false;
         bool bypassNamingWarning = false;
+        bool bypassInvalidNumber = false;
 
         public MainWindow()
         {
@@ -61,7 +62,7 @@ namespace PointEditor
 
                 PenColor.A = 0xFF;
 
-                
+
                 Preview.Fill = new SolidColorBrush(PenColor);
                 // Костыли
                 Palette.currentBrush.Color = PenColor;
@@ -105,7 +106,7 @@ namespace PointEditor
             //UpdateCounterDisplay();
 
             polygons.Add(newPolygon);
-            
+
             mainCanvas.Children.Add(newPolygon);
 
             UpdateList();
@@ -139,7 +140,7 @@ namespace PointEditor
                 MessageBox.Show("Для генерации кода на сцене необходим минимум один полигон", "Отмена");
                 return;
             }
-                
+
             foreach (Polygon poly in polygons)
             {
                 if (poly.Points.Count == 0)
@@ -151,7 +152,7 @@ namespace PointEditor
                 result += $"// Фигура {poly.Name}\nPolygon {poly.Name} = new();\n{poly.Name}.Stroke = new SolidColorBrush() " + "{ Color = Color.FromRgb(" + Palette.currentBrush.Color.R + ", " + Palette.currentBrush.Color.G + ", " + Palette.currentBrush.Color.B + ")};\n\n";
                 foreach (Point point in poly.Points)
                 {
-                    result += $"{poly.Name}.Points.Add(new Point({Math.Round(point.X, 2).ToString().Replace(',','.')},{Math.Round(point.Y, 2).ToString().Replace(',', '.')}));\n";
+                    result += $"{poly.Name}.Points.Add(new Point({Math.Round(point.X, 2).ToString().Replace(',', '.')},{Math.Round(point.Y, 2).ToString().Replace(',', '.')}));\n";
                 }
 
                 result += "\n\n";
@@ -214,43 +215,55 @@ namespace PointEditor
         private void Smooth_Click(object sender, RoutedEventArgs e)
         {
             // Oh boy, here we go
-            MessageBoxDialog dialog = new("Смягчить", "Введите значение (больше - дольше)");
-            if (dialog.ShowDialog() == true && int.TryParse(dialog.ResponseText, out int smooth_factor))
+            MessageBoxDialog dialog = new("Смягчить", "Введите значение");
+            if (dialog.ShowDialog() == true && dialog.ResponseText.Length > 0)
             {
-                if (PolygonList.SelectedItem != null)
+                if (int.TryParse(dialog.ResponseText, out int smooth_factor) && smooth_factor > 0)
                 {
-                    // Храним все объекты
-                    List<Polygon> revertItems = new();
-
-                    foreach (string itemName in PolygonList.SelectedItems)
+                    if (PolygonList.SelectedItem != null)
                     {
-                        Polygon poly = polygons.Where(x => x.Name == itemName).Single();
+                        // Храним все объекты
+                        List<Polygon> revertItems = new();
 
-                        // Проверяем, есть ли в фигуре точки
-                        if (poly.Points.Count > 0)
+                        foreach (string itemName in PolygonList.SelectedItems)
                         {
-                            revertItems.Add(poly); // Добавляем в список отката
+                            Polygon poly = polygons.Where(x => x.Name == itemName).Single();
 
-                            // Проверяем, совпадает ли последняя точка с начальной
-                            if (poly.Points.Last() != poly.Points[0])
-                                // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
-                                poly.Points.Add(poly.Points[0]);
-                            // Сглаживаем
-                            poly.Points = Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
-                        }
-                        else
-                        {
-                            if (!bypassNoPointsWarning)
+                            // Проверяем, есть ли в фигуре точки
+                            if (poly.Points.Count > 0)
                             {
-                                Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Попытка сглаживания фигуры {itemName} не удалась. Количество точек в фигуре должно быть больше 0");
-                                if (exDialog.ShowDialog() == true && exDialog.isCancelled)
+                                revertItems.Add(poly); // Добавляем в список отката
+
+                                // Проверяем, совпадает ли последняя точка с начальной
+                                if (poly.Points.Last() != poly.Points[0])
+                                    // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
+                                    poly.Points.Add(poly.Points[0]);
+                                // Сглаживаем
+                                poly.Points = Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
+                            }
+                            else
+                            {
+                                if (!bypassNoPointsWarning)
                                 {
-                                    // Логика отката действий
+                                    Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Попытка сглаживания фигуры {itemName} не удалась. Количество точек в фигуре должно быть больше 0");
+                                    if (exDialog.ShowDialog() == true && exDialog.isCancelled)
+                                    {
+                                        // Логика отката действий
+                                    }
+                                    bypassNoPointsWarning = exDialog.BypassDialog;
                                 }
-                                bypassNoPointsWarning = exDialog.BypassDialog;
                             }
                         }
                         // Сохраняем действе для отката
+                    }
+                }
+                else
+                {
+                    if (!bypassInvalidNumber)
+                    {
+                        Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Значение `{dialog.ResponseText}` не является валидным для этой операции.");
+                        exDialog.ShowDialog();
+                        bypassInvalidNumber = exDialog.BypassDialog;
                     }
                 }
             }
@@ -270,7 +283,7 @@ namespace PointEditor
                         Methods.MovePolygon(poly.Points, x, y);
                     }
                 }
-                else if(dialog.ResponseText.Length > 0 && !bypassIncorrectMoveInputWarning)
+                else if (dialog.ResponseText.Length > 0 && !bypassIncorrectMoveInputWarning)
                 {
                     Utility.Dialogs.ExceptionDialog exDialog = new("Ошибка смещения", $"Неверный ввод.\nИспользуйте маску:\n(-)горизонталь;(-)вертикаль");
                     exDialog.ShowDialog();

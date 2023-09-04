@@ -100,19 +100,6 @@ namespace PointEditor.Utility
         /// <summary>
         /// Смещает фигуру по координатам.
         /// </summary>
-        /// <param name="points">Коллекция точек фигуры</param>
-        /// <param name="x">Смещение по горизонтали</param>
-        /// <param name="y">Смещение по вертикали</param>
-        [Obsolete("Метод более не имеет смысла в применении. Используйте PointCollection.Move(Point offset)")]
-        public static void MovePolygon(PointCollection points, int x, int y)
-        {
-            for (int pointID = 0; pointID < points.Count; pointID++)
-                points[pointID] = points[pointID].Sum(new(x, y));
-        }
-
-        /// <summary>
-        /// Смещает фигуру по координатам.
-        /// </summary>
         /// <param name="offset">Смещение</param>
         public static void Move(this PointCollection points, Point offset)
         {

@@ -17,7 +17,7 @@ namespace PointEditor
 
     public partial class MainWindow : Window
     {
-        public static MainWindow instance;
+        public static MainWindow? instance;
         public List<Polygon> polygons = new();
         private int actionRevertCounter;
 
@@ -128,7 +128,7 @@ namespace PointEditor
         private void mainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed && PolygonList.SelectedItem != null)
-                polygons.Where(x => x.Name == PolygonList.SelectedItem).Single().Points.Add(e.GetPosition(this));
+                polygons.Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single().Points.Add(e.GetPosition(this));
         }
 
         private void GenerateCode(object sender, RoutedEventArgs e)
@@ -180,7 +180,7 @@ namespace PointEditor
         {
             if (PolygonList.SelectedItems.Count > 0)
             {
-                Polygon selected = polygons.Where(x => x.Name == PolygonList.SelectedItem).Single();
+                Polygon selected = polygons.Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single();
                 MessageBoxDialog dialog = new MessageBoxDialog("Переименовать", $"{selected.Name} будет переименован в");
                 if (dialog.ShowDialog() == true && dialog.ResponseText.Count() > 0)
                 {
@@ -280,7 +280,7 @@ namespace PointEditor
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
                         Polygon poly = polygons.Where(x => x.Name == itemName).Single();
-                        Methods.MovePolygon(poly.Points, x, y);
+                        poly.Points.Move(new Point(x, y));
                     }
                 }
                 else if (dialog.ResponseText.Length > 0 && !bypassIncorrectMoveInputWarning)

@@ -145,7 +145,7 @@ namespace PointEditor
             {
                 if (poly.Points.Count == 0)
                 {
-                    result += $"// {poly.Name} был пропущен - в фигуре нет точек";
+                    result += $"// {poly.Name} был пропущен - в фигуре нет точек\n\n";
                     continue;
                 }
 
@@ -164,7 +164,7 @@ namespace PointEditor
         private void Scale_Click(object sender, RoutedEventArgs e)
         {
             MessageBoxDialog dialog = new("Изменить размер", "Фактор изменения размера");
-            if (dialog.ShowDialog() == true && double.TryParse(dialog.ResponseText.Replace('.', ','), out double rescale_factor))
+            if (dialog.ShowDialog() == true && double.TryParse(dialog.ResponseText.Replace('.', ','), out double rescale_factor) && rescale_factor != 0)
             {
                 foreach (string itemName in PolygonList.SelectedItems)
                     polygons.Where(x => x.Name == itemName).Single().Points.Rescale(rescale_factor);
@@ -319,6 +319,13 @@ namespace PointEditor
             }
             UpdateCounterDisplay();
             UpdateList();
+        }
+
+        private void NewColorPicker_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Это окно является экспериментальной функцией.\nФункционал этого окна может отсутствовать/ломаться\nРекомендую пользоваться старой панелью выбора цвета.");
+            Utility.Dialogs.ColorPicker dialog = new();
+            dialog.ShowDialog();
         }
     }
 }

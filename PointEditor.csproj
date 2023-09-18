@@ -7,4 +7,12 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Images\CircularHueGradient.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\CircularHueGradient.png" />
+  </ItemGroup>
+
 </Project>

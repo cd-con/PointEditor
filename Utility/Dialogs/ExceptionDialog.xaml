@@ -7,14 +7,18 @@
         mc:Ignorable="d"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
-        Title="Exception" Height="150" Width="275">
-    <Grid>
-        <VirtualizingStackPanel>
-            <TextBlock x:Name="MessageBox" Text="Your input" TextWrapping="Wrap" Height="60" Margin="10,0,10,0"/>
+        Title="Ошибка" Height="175" Width="275">
+    <Grid Background="#FF05001E">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="46*"/>
+            <ColumnDefinition Width="229*"/>
+        </Grid.ColumnDefinitions>
+        <VirtualizingStackPanel Grid.ColumnSpan="2">
+            <TextBlock x:Name="MessageBox" Text="Your input" TextWrapping="Wrap" Margin="10,10,10,-80" Foreground="White"/>
             <Grid>
-                <Button Content="Продожить" IsDefault="True" Click="OKButton_Click" Margin="10,20,145,0" />
-                <Button Content="Отмена" ToolTip="Откатить изменения" Click="CancelButton_Click" Margin="150,20,10,0" />
-                <CheckBox Content="Не показывать больше" x:Name="Bypass" IsChecked="False" Margin="10,0,0,25"/>
+                <Button Content="Продолжить" IsDefault="True" Click="OKButton_Click" Margin="7,106,148,-86" Foreground="White" Background="#00DDDDDD" />
+                <Button Content="Отмена" ToolTip="Откатить изменения" Click="CancelButton_Click" Margin="147,106,13,-86" Foreground="White" Background="#00DDDDDD" />
+                <CheckBox Content="Не показывать больше" x:Name="Bypass" IsChecked="False" Margin="7,86,3,-61" Background="White" Foreground="White"/>
             </Grid>
         </VirtualizingStackPanel>
     </Grid>

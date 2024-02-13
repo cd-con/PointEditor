@@ -9,7 +9,7 @@ namespace PointEditor.Utility.Dialogs
     public partial class ExceptionDialog : Window
     {
         public bool isCancelled = true;
-        public ExceptionDialog(string caption = "Exception", string message = "An exception occured while trying to perform an operation.")
+        public ExceptionDialog(string caption = "Exception", string message = "An exception occurred while trying to perform this operation.")
         {
             InitializeComponent();
             SystemSounds.Beep.Play();

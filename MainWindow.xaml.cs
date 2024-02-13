@@ -81,7 +81,7 @@ namespace PointEditor
         {
             if (e.ButtonState == MouseButtonState.Pressed &&
                 PolygonList.SelectedItem != null)
-                polygons.Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single().Points.Add(e.GetPosition(this));
+                polygons.Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single().Points.Add(e.GetPosition(mainCanvas));
         }
 
         private void GenerateCode(object sender, RoutedEventArgs e)

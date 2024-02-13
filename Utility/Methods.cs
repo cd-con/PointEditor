@@ -17,7 +17,7 @@ namespace PointEditor.Utility
         /// <param name="point">Исходная точка</param>
         /// <param name="newPoint">Смещение</param>
         /// <returns>Смещённая точка</returns>
-        private static Point Sum(this Point point, Point newPoint) => new Point(point.X + newPoint.X, point.Y + newPoint.Y);
+        private static Point Sum(this Point point, Point newPoint) => new(point.X + newPoint.X, point.Y + newPoint.Y);
         
         /// <summary>
         /// Умножает точку на значение.
@@ -25,7 +25,7 @@ namespace PointEditor.Utility
         /// <param name="point">Исходная точка</param>
         /// <param name="factor">Множитель</param>
         /// <returns>Смещённая точка</returns>
-        public static Point Scale(this Point point, double factor) => new Point(point.X * factor, point.Y * factor);
+        public static Point Scale(this Point point, double factor) => new(point.X * factor, point.Y * factor);
 
         /// <summary>
         /// Делит точку на значение.
@@ -33,7 +33,7 @@ namespace PointEditor.Utility
         /// <param name="point">Исходная точка</param>
         /// <param name="factor">Множитель</param>
         /// <returns>Смещённая точка</returns>
-        public static Point Shrink(this Point point, double factor) => new Point(point.X / factor, point.Y / factor);
+        public static Point Shrink(this Point point, double factor) => new(point.X / factor, point.Y / factor);
 
         public static Point GetCenter(PointCollection collection) => collection.Aggregate(new Point(0, 0), (current, point) => current.Sum(point)).Shrink(collection.Count);
 
@@ -50,7 +50,7 @@ namespace PointEditor.Utility
         /// </summary>
         /// <param name="value">Исходное значение</param>
         /// <returns>Исходное значение bool? конвертированное в bool</returns>
-        public static bool NotNullBool(this bool? value) => value == null ? false : (bool)value;
+        public static bool NotNullBool(this bool? value) => value != null && (bool)value;
 
         public static T[] Shift<T>(this T[] arr, T newObject)
         {
@@ -59,7 +59,7 @@ namespace PointEditor.Utility
                 arr[i - 1] = arr[i];
             }
 
-            arr[arr.Length - 1] = newObject;
+            arr[^1] = newObject;
 
             return arr;
         }
@@ -117,13 +117,11 @@ namespace PointEditor.Utility
         {
             double[] xs = points.Select(x => x.X).ToArray();
             double[] ys = points.Select(x => x.Y).ToArray();
-            (double[] xs_res, double[] ys_res) = Interopolation.Cubic.InterpolateXY(xs, ys, quality);
+            (double[] xs_res, double[] ys_res) = Interopolation.Cubic.InterpolateXY(xs, ys, quality).Round();
             
-            PointCollection res = new PointCollection();
+            PointCollection res = new();
             for (int i = 0; i < xs_res.Length; i++)
-            {
                 res.Add(new(xs_res[i], ys_res[i]));
-            }
 
             return res;
         }
@@ -148,11 +146,13 @@ namespace PointEditor.Utility
         /// <returns>Строка, содержащая исходное число</returns>
         public static string ByteArrayToString(byte[] bytes)
         {
-            StringBuilder hex = new StringBuilder(bytes.Length * 2);
+            StringBuilder hex = new(bytes.Length * 2);
             foreach (byte b in bytes)
                 hex.AppendFormat("{0:x2}", b);
             return hex.ToString();
         }
+
+        public static (double[], double[]) Round(this (double[], double[]) input, int d = 2) => (input.Item1.Select(x => Math.Round(x, d)).ToArray(), input.Item2.Select(x => Math.Round(x, d)).ToArray());
 
     }
 }

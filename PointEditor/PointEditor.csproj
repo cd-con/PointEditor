@@ -8,15 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Images\CircularHueGradient.png" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Extended.Wpf.Toolkit" Version="4.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Images\CircularHueGradient.png" />
   </ItemGroup>
 
 </Project>

@@ -12,7 +12,11 @@
             <ColumnDefinition Width="350*"/>
             <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
-        <Canvas x:Name="mainCanvas" MouseDown="MainCanvas_MouseDown" Background="#82FFFFFF" Margin="10,10,10,10"/>
+        <Canvas x:Name="mainCanvas" 
+                MouseDown="MainCanvas_MouseDown" 
+                Background="#82FFFFFF" 
+                Margin="10,10,10,10"
+                ClipToBounds="True"/>
         <GroupBox Header="Параметры"
                   Foreground="White" 
                   Grid.Column="1" 

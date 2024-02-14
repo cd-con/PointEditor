@@ -18,4 +18,5 @@ using (var client = new WebClient())
 
 Console.WriteLine("Updating...");
 ZipFile.ExtractToDirectory(DOWNLOAD_TARGET, EXTRACT_TARGET, true);
+File.Delete(DOWNLOAD_TARGET);
 Console.WriteLine("Finished!");

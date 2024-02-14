@@ -1,6 +1,9 @@
 ﻿using PointEditor.Utility;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -14,6 +17,7 @@ namespace PointEditor
 
     public partial class MainWindow : Window
     {
+        private const int APP_VERSION = 11;
         public List<Polygon> polygons = new();
 
         bool bypassNoPointsWarning = false;
@@ -24,6 +28,34 @@ namespace PointEditor
         public MainWindow()
         {
             InitializeComponent();
+            CheckUpdates();
+        }
+
+        public async void CheckUpdates()
+        {
+            using (HttpClient client = new()
+            {
+                BaseAddress = new Uri("https://raw.githubusercontent.com/cd-con/PointEditor/master/currentVersion.txt")
+            })
+            {
+                try
+                {
+                    if (int.TryParse(await client.GetStringAsync(client.BaseAddress), out int version) && version > APP_VERSION)
+                    {
+
+                        if (MessageBox.Show("Вышла новая версия приложения!\nОбновить сейчас?", "Обновление", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        {
+                            Process.Start("Updater.exe");
+                            Application.Current.Shutdown();
+                        }
+
+                    }
+                }
+                catch (HttpRequestException ex) 
+                {
+                    // Kwuh
+                }
+            }
         }
 
         public void UpdateList() =>PolygonList.ItemsSource = polygons.Select(x => x.Name);

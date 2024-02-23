@@ -22,15 +22,18 @@
                   Grid.Column="1" 
                   Margin="0,0,10,10">
             <Grid>
-                <GroupBox Header="Карандаш" Height="179" VerticalAlignment="Top" Foreground="White">
+                <GroupBox Header="Карандаш" Height="65" VerticalAlignment="Top" Foreground="White">
                     <Grid>
                         <xctk:ColorPicker x:Name="NewColorPicker" 
                                           SelectedColorChanged="NewColorPicker_ChangedColor" 
-                                          Margin="10,10,10,123"
-                                          SelectedColor="Gold" TabBackground="#FF05001E" TabForeground="White" Background="#FF05001E" BorderBrush="#FF2E53BF" DropDownBackground="#FF05001E" DropDownBorderBrush="#FF2E53BF" HeaderBackground="#FF05001E" HeaderForeground="White"/>
+                                          Margin="10,10,10,0"
+                                          SelectedColor="Gold" TabBackground="#FF05001E" TabForeground="White" Background="#FF05001E" BorderBrush="#FF2E53BF" DropDownBackground="#FF05001E" DropDownBorderBrush="#FF2E53BF" HeaderBackground="#FF05001E" HeaderForeground="White" Height="23" VerticalAlignment="Top"/>
                     </Grid>
                 </GroupBox>
-                <GroupBox Header="Инструменты" Height="205" VerticalAlignment="Top" Margin="0,179,0,0">
+                <GroupBox Header="Инструменты" 
+                          Height="205" 
+                          VerticalAlignment="Top" 
+                          Margin="0,70,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="5*"/>
@@ -39,7 +42,7 @@
                         <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="6,35,0,0" VerticalAlignment="Top" Click="PolygonAdd_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1" Width="110"/>
                         <Button Content="Удалить полигон" HorizontalAlignment="Left" Margin="6,59,0,0" VerticalAlignment="Top" Click="DeleteItems" Width="110" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
                         <Button Content="Получить точки" HorizontalAlignment="Left" Margin="6,3,0,0" VerticalAlignment="Top" Click="GenerateCode" Width="110" Background="#01DDDDDD" Foreground="White" Grid.RowSpan="2"/>
-                        <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="6,103,0,0" VerticalAlignment="Top" Width="110" Click="Scale_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
+                        <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="6,103,0,0" VerticalAlignment="Top" Width="110" Click="Resize_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
                         <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="6,128,0,0" VerticalAlignment="Top" Width="110" Click="Move_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
                         <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="6,153,0,0" VerticalAlignment="Top" Width="110" Click="Smooth_Click" Grid.Row="1" Background="#00DDDDDD" Foreground="White"/>
                         <ListBox SelectionMode="Extended" x:Name="PolygonList" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="121,3,0,0" Height="177" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.RowSpan="2">
@@ -50,6 +53,30 @@
                                 <KeyBinding Key="Esc" Command="Deselect"/>
                             </ListBox.InputBindings>-->
                         </ListBox>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Действия" 
+                          Margin="0,280,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="25*"/>
+                            <RowDefinition Height="50"/>
+                        </Grid.RowDefinitions>
+                        <ListBox x:Name="ActionsList" Margin="0,0,0,3" Grid.ColumnSpan="2"/>
+                        <Button x:Name="Revert"
+                                Content="Откатить" 
+                                HorizontalAlignment="Left" 
+                                Margin="10,0,0,0"
+                                Width="96" Height="20" VerticalAlignment="Center" Click="Revert_Click" Grid.Row="1"/>
+                        <Button Content="Закрепить" 
+                                HorizontalAlignment="Left" 
+                                Margin="27,0,0,0" 
+                                Width="96"
+                                Height="20" VerticalAlignment="Center" Click="FixRollback_Click" Grid.Row="1" Grid.Column="1"/>
                     </Grid>
                 </GroupBox>
             </Grid>

@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Net;
 
 const string DOWNLOAD_URL = "https://github.com/cd-con/PointEditor/releases/latest/download/PointEditor.zip";
@@ -8,8 +7,6 @@ string EXTRACT_TARGET = Directory.GetCurrentDirectory();
 
 
 Console.WriteLine("Killing process... (waiting 3s)");
-Process? _process = Process.GetProcessesByName("PointEditor.exe").FirstOrDefault();
-_process?.Kill();
 Thread.Sleep(3000);
 Console.WriteLine("Downloading update...");
 

@@ -11,22 +11,16 @@ namespace PointEditor.Utility.Actions.Objects
     internal class AddPoint : IAction
     {
         PointCollection points;
-        public object Do(object[] args)
+        public void Do(object[] args)
         {
             // args
             // 0 - collection
             // 1 - point
             points = (PointCollection)args[0];
             points.Add((Point)args[1]);
-
-            return 0;
         }
 
-        public object Undo()
-        {
-            points.Remove(points.Last());
-            return 0;
-        }
+        public void Undo() => points.Remove(points.Last());
 
         public override string ToString() => "Добавление точки";
     }

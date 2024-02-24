@@ -3,7 +3,6 @@ using PointEditor.Utility.Actions;
 using PointEditor.Utility.Actions.Objects;
 using PointEditor.Utility.Actions.Objects.Generic;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -11,7 +10,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -69,7 +67,7 @@ namespace PointEditor
                         MessageBox.Show("Invalid version!");
                     }
                 }
-                catch (HttpRequestException ex) 
+                catch (HttpRequestException ex)
                 {
                     MessageBox.Show(ex.Message);
                     // Kwuh
@@ -87,7 +85,7 @@ namespace PointEditor
                 return;
 
             Color newColor = e.NewValue.Safe();
-            if (PolygonList.SelectedItems == null || PolygonList.SelectedItems.Count == 0 )
+            if (PolygonList.SelectedItems == null || PolygonList.SelectedItems.Count == 0)
             {
                 //foreach (var polygon in polygons)
                 //    polygon.Stroke = Preview.Fill;
@@ -114,7 +112,7 @@ namespace PointEditor
             UpdateList();
             UpdateActionsList();
 
-            PolygonList.SelectedItem = mainCanvas.Children.OfType<Shape>().Last();
+            PolygonList.SelectedItem = mainCanvas.Children.OfType<Shape>().Last().Name;
         }
 
         private void DeleteItems(object sender, RoutedEventArgs e)
@@ -136,7 +134,8 @@ namespace PointEditor
         private void MainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed &&
-                PolygonList.SelectedItem != null) {
+                PolygonList.SelectedItem != null)
+            {
                 Shape selectedShape = MainCanvas.Children.OfType<Shape>().Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single();
 
                 if (selectedShape.GetType() == typeof(Polygon))
@@ -193,8 +192,8 @@ namespace PointEditor
         private void Resize_Click(object sender, RoutedEventArgs e)
         {
             MessageBoxDialog resizeDialog = new("Изменить размер", "Фактор изменения размера");
-            if (resizeDialog.ShowDialog() == true && 
-                double.TryParse(resizeDialog.ResponseText, NumberStyles.Float, CultureInfo.InvariantCulture, out double factor) && 
+            if (resizeDialog.ShowDialog() == true &&
+                double.TryParse(resizeDialog.ResponseText, NumberStyles.Float, CultureInfo.InvariantCulture, out double factor) &&
                 factor != 0)
             {
                 foreach (string itemName in PolygonList.SelectedItems)
@@ -218,17 +217,17 @@ namespace PointEditor
 
                 MessageBoxDialog renameDialog = new("Переименовать", $"{selected.Name} будет переименован в");
 
-                if (renameDialog.ShowDialog() == true && 
+                if (renameDialog.ShowDialog() == true &&
                     renameDialog.ResponseText.Length > 0)
                 {
                     string result = renameDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
 
-                    if (result.Length > 16 && 
+                    if (result.Length > 16 &&
                         !bypassNamingWarning)
                     {
-                        Utility.Dialogs.ExceptionDialog nameLengthWarnDialog = new("Предупреждение", 
+                        Utility.Dialogs.ExceptionDialog nameLengthWarnDialog = new("Предупреждение",
                                                                       $"Рекомендуем укоротить название до 16 символов и меньше.");
-                        if (nameLengthWarnDialog.ShowDialog() == true && 
+                        if (nameLengthWarnDialog.ShowDialog() == true &&
                             nameLengthWarnDialog.isCancelled)
                         {
                             Rename();
@@ -262,7 +261,7 @@ namespace PointEditor
         {
             // Oh boy, here we go
             MessageBoxDialog smootherDialog = new("Смягчить", "Введите значение");
-            if (smootherDialog.ShowDialog() == true && 
+            if (smootherDialog.ShowDialog() == true &&
                 smootherDialog.ResponseText.Length > 0)
             {
                 if (int.TryParse(smootherDialog.ResponseText, out int smooth_factor) &&
@@ -282,7 +281,7 @@ namespace PointEditor
                                 // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
                                 poly.Points.Add(poly.Points[0]);
                             // Сглаживаем
-                            poly.Points = Methods.SmootherPolygonCubic(poly.Points, smooth_factor);
+                            poly.Points = Utils.SmootherPolygonCubic(poly.Points, smooth_factor);
                         }
                         else
                         {
@@ -316,15 +315,15 @@ namespace PointEditor
             if (moveDialog.ShowDialog() == true)
             {
                 string[] coords = moveDialog.ResponseText.Split(';');
-                if (coords.Length == 2 && 
-                    int.TryParse(coords[0], out int x) && 
+                if (coords.Length == 2 &&
+                    int.TryParse(coords[0], out int x) &&
                     int.TryParse(coords[1], out int y))
                 {
                     foreach (string itemName in PolygonList.SelectedItems)
                     {
                         IAction newAction = new MovePolyGeneric();
 
-                        newAction.Do(new object[] { new Point(x, y), ((Polygon)MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single()).Points});
+                        newAction.Do(new object[] { new Point(x, y), ((Polygon)MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single()).Points });
 
                         actionList.Add(newAction);
                     }
@@ -344,7 +343,8 @@ namespace PointEditor
             if (ActionsList.SelectedItem != null)
             {
                 int revertPoint = ActionsList.Items.IndexOf(ActionsList.SelectedItem);
-                while(revertPoint != actionList.Count) { 
+                while (revertPoint != actionList.Count)
+                {
                     IAction revertAction = actionList.Last();
                     revertAction.Undo();
                     actionList.Remove(revertAction);

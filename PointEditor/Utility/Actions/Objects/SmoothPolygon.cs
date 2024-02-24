@@ -7,12 +7,12 @@ namespace PointEditor.Utility.Actions.Objects
     /// </summary>
     internal class SmoothPolygon : IAction
     {
-        public object Do(object[] args)
+        public void Do(object[] args)
         {
             throw new NotImplementedException();
         }
 
-        public object Undo()
+        public void Undo()
         {
             throw new NotImplementedException();
         }

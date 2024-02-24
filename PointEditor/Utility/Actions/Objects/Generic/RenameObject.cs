@@ -8,7 +8,7 @@ internal class RenameObject : IAction
     public string oldName;
     public string newName;
 
-    public object Do(object[] args)
+    public void Do(object[] args)
     {
         // Args
         // 0 - figure
@@ -18,14 +18,12 @@ internal class RenameObject : IAction
         oldName = targetFigure.Name;
         newName = (string)args[1];
         targetFigure.Name = newName;
-
-        return newName;
     }
 
-    public object Undo()
+    public void Undo()
     {
         targetFigure.Name = oldName;
-        return oldName;
+        targetFigure = null;
     }
 
     public override string ToString() => $"{oldName} переименован в {newName}";

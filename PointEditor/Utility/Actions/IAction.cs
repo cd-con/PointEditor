@@ -8,6 +8,6 @@ namespace PointEditor.Utility.Actions;
 
 internal interface IAction
 {
-    public object Undo();
-    public object Do(object[] args);
+    public void Undo();
+    public void Do(object[] args);
 }

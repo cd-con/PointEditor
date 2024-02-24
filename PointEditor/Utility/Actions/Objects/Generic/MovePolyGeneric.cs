@@ -12,7 +12,7 @@ internal class MovePolyGeneric : IAction
 {
     public Point offset;
     public PointCollection points;
-    public object Do(object[] args)
+    public void Do(object[] args)
     {
         // Args
         // 0 - offset factor
@@ -20,14 +20,9 @@ internal class MovePolyGeneric : IAction
         offset = (Point)args[0];
         points = (PointCollection)args[1];
         Move(offset, points);
-        return null;
     }
 
-    public object Undo()
-    {
-        Move(offset.Scale(-1), points);
-        return null;
-    }
+    public void Undo() => Move(offset.Scale(-1), points);
 
     private static void Move(Point factor, PointCollection collection) => collection.Move(factor);
 

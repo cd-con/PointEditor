@@ -8,6 +8,6 @@
 ## Вики
 Находится в разработке, [будет жить здесь](https://pointeditor.readthedocs.io/en/latest/).
 ## Скриншоты
-![image](https://github.com/cd-con/PointEditor/assets/61092992/9587e5f1-e37e-42b7-aceb-0c022d284ac2)
-![image](https://github.com/cd-con/PointEditor/assets/61092992/dcb96f20-4bb9-494a-a8a8-1a29639b1acb)
-![image](https://github.com/cd-con/PointEditor/assets/61092992/b9820247-416f-4f8a-adf1-cc5d208afacd)
+![image](https://github.com/cd-con/PointEditor/assets/61092992/d43b4d04-9d03-4482-9e9d-d32e9f9d204e)
+![image](https://github.com/cd-con/PointEditor/assets/61092992/2c7cc91a-ae7c-4fc8-b427-8ffe6f5d831f)
+![image](https://github.com/cd-con/PointEditor/assets/61092992/16514b2c-39c3-4008-be61-3da6630a09f5)

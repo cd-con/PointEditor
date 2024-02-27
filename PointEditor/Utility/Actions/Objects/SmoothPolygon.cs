@@ -19,7 +19,7 @@ internal class SmoothPolygon : IAction
         // 1 - points
         poly = (Polygon)args[1];
 
-        initialFactor = poly.Points.Count;
+        initialFactor = poly.Points.Count + 1;
 
         // Проверяем, совпадает ли последняя точка с начальной
         if (poly.Points.Last() != poly.Points.First())

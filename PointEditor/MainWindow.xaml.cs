@@ -22,7 +22,7 @@ namespace PointEditor
 
     public partial class MainWindow : Window
     {
-        private List<IAction> actionList = new List<IAction>();
+        private List<IAction> l_Actions = new();
 
         private const int APP_VERSION = 20;
 
@@ -51,7 +51,7 @@ namespace PointEditor
                 try
                 {
                     string s_version = await client.GetStringAsync(client.BaseAddress);
-                    s_version = s_version.Replace("\n", "");
+                    s_version = s_version.TrimEnd();
                     if (int.TryParse(s_version, out int version) && version > APP_VERSION)
                     {
 
@@ -61,10 +61,6 @@ namespace PointEditor
                             Application.Current.Shutdown();
                         }
 
-                    }
-                    else
-                    {
-                        MessageBox.Show("Invalid version!");
                     }
                 }
                 catch (HttpRequestException ex)
@@ -76,7 +72,7 @@ namespace PointEditor
         }
 
         public void UpdateList() => PolygonList.ItemsSource = MainCanvas.Children.OfType<Shape>().Select(x => x.Name);
-        public void UpdateActionsList() => ActionsList.ItemsSource = actionList.Select(x => $"{actionList.IndexOf(x) + 1}. " + x.ToString());
+        public void UpdateActionsList() => ActionsList.ItemsSource = l_Actions.Select(x => $"{l_Actions.IndexOf(x) + 1}. " + x.ToString());
 
         private void NewColorPicker_ChangedColor(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
@@ -107,7 +103,7 @@ namespace PointEditor
                                         3,
                                         $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}"});
 
-            actionList.Add(newAction);
+            l_Actions.Add(newAction);
 
             UpdateList();
             UpdateActionsList();
@@ -124,7 +120,7 @@ namespace PointEditor
                 IAction newAction = new DeleteObject();
 
                 newAction.Do(new object[] { item });
-                actionList.Add(newAction);
+                l_Actions.Add(newAction);
             }
 
             UpdateList();
@@ -142,7 +138,7 @@ namespace PointEditor
                 {
                     IAction newAction = new AddPoint();
                     newAction.Do(new object[] { ((Polygon)selectedShape).Points, e.GetPosition(mainCanvas) });
-                    actionList.Add((newAction));
+                    l_Actions.Add((newAction));
                     UpdateActionsList();
                 }
                 else
@@ -161,32 +157,25 @@ namespace PointEditor
             string result = string.Empty;
 
             foreach (Polygon poly in MainCanvas.Children.OfType<Shape>().Cast<Polygon>())
+                result += poly.GetCode();
+
+            Cursor = Cursors.Wait; // Дадим подумать...
+
+            try
             {
-                if (poly.Points.Count > 0)
-                {
-                    SolidColorBrush brush = (SolidColorBrush)poly.Stroke;
+                Clipboard.SetText(result);
+                MessageBox.Show("Код успешно скопирован в буфер обмена", "Код скопирован");
+            } 
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                MessageBoxDialog copypasteDialog = new("Произошла ошибка", 
+                                                       "Невозможно скопировать код в буфер обмена.\nКод предоставлен ниже.");
+                copypasteDialog.ResponseTextBox.Text = result;
 
-                    result += $"// Фигура {poly.Name}\n" +
-                              $"Polygon {poly.Name} = new();\n" +
-                              $"{poly.Name}.Stroke = new SolidColorBrush() " +
-                               "{ Color = Color.FromRgb(" + brush.Color.R +
-                               ", " + brush.Color.G +
-                               ", " + brush.Color.B + ")};" +
-                               "\n\n";
+                Cursor = null; // Не забываем сбросить курсор
 
-                    foreach (Point point in poly.Points)
-                        result += $"{poly.Name}.Points.Add(new Point({point.X.ToString().Replace(',', '.')},{point.Y.ToString().Replace(',', '.')}));\n";
-
-                    result += "\n\n";
-                }
-                else
-                {
-                    result += $"// {poly.Name} был пропущен - в фигуре нет точек\n\n";
-                }
+                copypasteDialog.ShowDialog();
             }
-
-            Clipboard.SetText(result);
-            MessageBox.Show("Код успешно скопирован в буфер обмена", "Код скопирован");
         }
 
         private void Resize_Click(object sender, RoutedEventArgs e)
@@ -200,7 +189,7 @@ namespace PointEditor
                 {
                     IAction newResizeAction = new ResizePolyGeneric();
                     newResizeAction.Do(new object[] { factor, ((Polygon)MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single()).Points });
-                    actionList.Add(newResizeAction);
+                    l_Actions.Add(newResizeAction);
                 }
                 UpdateActionsList();
             }
@@ -227,9 +216,11 @@ namespace PointEditor
                     {
                         Utility.Dialogs.ExceptionDialog nameLengthWarnDialog = new("Предупреждение",
                                                                       $"Рекомендуем укоротить название до 16 символов и меньше.");
+
                         if (nameLengthWarnDialog.ShowDialog() == true &&
                             nameLengthWarnDialog.isCancelled)
                         {
+                            // TODO Убрать рекурсию
                             Rename();
                             return;
                         }
@@ -250,7 +241,7 @@ namespace PointEditor
 
                     newRenameAction.Do(new object[] { selected, result });
 
-                    actionList.Add(newRenameAction);
+                    l_Actions.Add(newRenameAction);
                     UpdateList();
                     UpdateActionsList();
                 }
@@ -276,12 +267,11 @@ namespace PointEditor
                         // Проверяем, есть ли в фигуре точки
                         if (poly.Points.Count > 0)
                         {
-                            // Проверяем, совпадает ли последняя точка с начальной
-                            if (poly.Points.Last() != poly.Points[0])
-                                // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
-                                poly.Points.Add(poly.Points[0]);
-                            // Сглаживаем
-                            poly.Points = Utils.SmootherPolygonCubic(poly.Points, smooth_factor);
+                            IAction newAction = new SmoothPolygon();
+
+                            newAction.Do(new object[] { smooth_factor, poly });
+
+                            l_Actions.Add(newAction);
                         }
                         else
                         {
@@ -296,6 +286,7 @@ namespace PointEditor
                             }
                         }
                     }
+                    UpdateActionsList();
                 }
                 else
                 {
@@ -325,7 +316,7 @@ namespace PointEditor
 
                         newAction.Do(new object[] { new Point(x, y), ((Polygon)MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single()).Points });
 
-                        actionList.Add(newAction);
+                        l_Actions.Add(newAction);
                     }
                     UpdateActionsList();
                 }
@@ -343,11 +334,11 @@ namespace PointEditor
             if (ActionsList.SelectedItem != null)
             {
                 int revertPoint = ActionsList.Items.IndexOf(ActionsList.SelectedItem);
-                while (revertPoint != actionList.Count)
+                while (revertPoint != l_Actions.Count)
                 {
-                    IAction revertAction = actionList.Last();
+                    IAction revertAction = l_Actions.Last();
                     revertAction.Undo();
-                    actionList.Remove(revertAction);
+                    l_Actions.Remove(revertAction);
                 }
             }
             UpdateList();
@@ -356,7 +347,7 @@ namespace PointEditor
 
         private void FixRollback_Click(object sender, RoutedEventArgs e)
         {
-            actionList.Clear();
+            l_Actions.Clear();
             UpdateActionsList();
         }
     }

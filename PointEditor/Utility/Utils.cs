@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace PointEditor.Utility;
 
@@ -125,4 +126,65 @@ public static class Utils
     /// <returns>Округлённый кортеж, состоящий из двух массивов типа double</returns>
     public static (double[], double[]) Round(this (double[], double[]) input, int roundFactor = 2) => (input.Item1.Select(x => Math.Round(x, roundFactor)).ToArray(), input.Item2.Select(x => Math.Round(x, roundFactor)).ToArray());
 
+    /// <summary>
+    /// Генерация кода для полигона
+    /// </summary>
+    /// <param name="poly"></param>
+    /// <returns></returns>
+    public static string GetCode(this Polygon poly)
+    {
+        if (poly.Points.Count > 0)
+        {
+            string result = string.Empty;
+            SolidColorBrush brush = (SolidColorBrush)poly.Stroke;
+
+            result += $"// Полигон {poly.Name}\n" +
+                      $"Polygon {poly.Name} = new();\n" +
+                      $"{poly.Name}.Stroke = new SolidColorBrush() " +
+                       "{ Color = Color.FromRgb(" + brush.Color.R +
+                       ", " + brush.Color.G +
+                       ", " + brush.Color.B + ")};" +
+                       "\n\n";
+
+            foreach (Point point in poly.Points)
+                result += $"{poly.Name}.Points.Add(new Point({point.X.ToString().Replace(',', '.')},{point.Y.ToString().Replace(',', '.')}));\n";
+
+            result += "\n\n";
+
+            return result;
+        }
+        else
+            return $"// {poly.Name} был пропущен - в полигоне нет точек\n\n";
+    }
+
+    /// <summary>
+    /// Генерация кода для ломаной
+    /// </summary>
+    /// <param name="poly"></param>
+    /// <returns></returns>
+    public static string GetCode(this Polyline poly)
+    {
+        if (poly.Points.Count > 0)
+        {
+            string result = string.Empty;
+            SolidColorBrush brush = (SolidColorBrush)poly.Stroke;
+
+            result += $"// Ломаная {poly.Name}\n" +
+                      $"Polyline {poly.Name} = new();\n" +
+                      $"{poly.Name}.Stroke = new SolidColorBrush() " +
+                       "{ Color = Color.FromRgb(" + brush.Color.R +
+                       ", " + brush.Color.G +
+                       ", " + brush.Color.B + ")};" +
+                       "\n\n";
+
+            foreach (Point point in poly.Points)
+                result += $"{poly.Name}.Points.Add(new Point({point.X.ToString().Replace(',', '.')},{point.Y.ToString().Replace(',', '.')}));\n";
+
+            result += "\n\n";
+
+            return result;
+        }
+        else
+            return $"// {poly.Name} был пропущен - в ломаной нет точек\n\n";
+    }
 }

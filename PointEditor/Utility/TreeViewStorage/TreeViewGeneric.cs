@@ -5,8 +5,9 @@ namespace PointEditor.Utility.TreeViewStorage;
 
 internal abstract class TreeViewGeneric
 {
+    private TreeViewGeneric? Parent;
     public List<TreeViewGeneric> l_Child = new();
-
+    public string s_Name = string.Empty;
     internal enum VIEWTYPE
     {
         None = 0,
@@ -27,4 +28,20 @@ internal abstract class TreeViewGeneric
         foreach (TreeViewGeneric item in l_Child)
             yield return item.Get();
     }
+
+    public TreeViewGeneric? FindChild(string name)
+    {
+        foreach(TreeViewGeneric item in l_Child)
+        {
+            if (item.s_Name == name)
+                return item;
+
+            item.FindChild(name);
+        }
+        return null;
+    }
+
+    public void SetParent(TreeViewGeneric newParent) => Parent = newParent;
+
+    public TreeViewGeneric? GetParent() => Parent;
 }

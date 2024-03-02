@@ -47,13 +47,22 @@
                         <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="6,153,0,0" VerticalAlignment="Top" Width="110" Click="Smooth_Click" Grid.Row="1" Background="#00DDDDDD" Foreground="White"/>
                         <ListBox SelectionMode="Extended" x:Name="PolygonList" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="121,3,0,0" Height="48" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.RowSpan="2">
                         </ListBox>
-                        <TreeView x:Name="SceneTreeView" Margin="121,50,0,0" Height="124" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.Row="1">
+                        <TreeView x:Name="SceneTreeView" 
+                                  Margin="121,50,0,0" 
+                                  Height="124" 
+                                  VerticalAlignment="Top" 
+                                  Background="Transparent" 
+                                  Foreground="White" 
+                                  Grid.Row="1"
+                                  PreviewMouseDoubleClick="SceneTreeView_Rename">
                             <TreeView.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="Добавить папку" Click="TreeView_AddFolder"/>
                                     <MenuItem Header="Добавить фигуру">
-                                        <MenuItem Header="Полигон"/>
+                                        <MenuItem Header="Полигон" Click="TreeView_AddPoly"/>
                                     </MenuItem>
+                                    <Separator/>
+                                    <MenuItem Header="Удалить элемент" Click="TreeView_DeleteItem"/>
                                 </ContextMenu>
                             </TreeView.ContextMenu>
                         </TreeView>

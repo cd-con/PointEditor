@@ -4,12 +4,10 @@ namespace PointEditor.Utility.TreeViewStorage;
 
 internal class TreeViewFolder : TreeViewGeneric
 {
-    private string s_folderName;
-
     public TreeViewFolder(string folderName)
     {
         ViewIcon = VIEWTYPE.Folder;
-        s_folderName = folderName;
+        s_Name = folderName;
     }
 
     public override TreeViewItem Get()
@@ -17,7 +15,7 @@ internal class TreeViewFolder : TreeViewGeneric
         TreeViewItem t_Item = new()
         {
             Tag = "FOLDER",
-            Header = s_folderName,
+            Header = s_Name,
             Foreground = System.Drawing.Color.White.ToBrush()
         };
 
@@ -27,7 +25,7 @@ internal class TreeViewFolder : TreeViewGeneric
         return t_Item;
     }
 
-    public override string GetStoredValue() => s_folderName;
+    public override string GetStoredValue() => s_Name;
 
-    public override void SetStoredValue(object value) => s_folderName = value.ToString();
+    public override void SetStoredValue(object value) => s_Name = value.ToString();
 }

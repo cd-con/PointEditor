@@ -10,13 +10,15 @@ namespace PointEditor.Utility.TreeViewStorage
         public TreeViewShape(Shape shape)
         {
             s_Shape = shape;
+            s_Name = shape.Name;
         }
 
         public override TreeViewItem Get()
         {
             TreeViewItem t_Item = new()
             {
-                Header = s_Shape.Name
+                Header = s_Name,
+                Foreground = System.Drawing.Color.White.ToBrush()
             };
 
             foreach (TreeViewItem item in GetChild())

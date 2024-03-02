@@ -140,11 +140,15 @@ namespace PointEditor
 
         private void MainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ButtonState == MouseButtonState.Pressed &&
-                PolygonList.SelectedItem != null)
+            if (e.ButtonState == MouseButtonState.Pressed)
             {
-                Shape selectedShape = MainCanvas.Children.OfType<Shape>().Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single();
+                //Shape selectedShape = MainCanvas.Children.OfType<Shape>().Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single();
+                TreeViewGeneric selected = FindSelected();
 
+                if (selected == null || selected.GetType() != typeof(TreeViewShape))
+                    return;
+
+                Shape selectedShape = ((TreeViewShape)selected).GetStoredValue();
                 if (selectedShape.GetType() == typeof(Polygon))
                 {
                     IAction newAction = new AddPoint();
@@ -176,10 +180,10 @@ namespace PointEditor
             {
                 Clipboard.SetText(result);
                 MessageBox.Show("Код успешно скопирован в буфер обмена", "Код скопирован");
-            } 
+            }
             catch (System.Runtime.InteropServices.COMException)
             {
-                MessageBoxDialog copypasteDialog = new("Произошла ошибка", 
+                MessageBoxDialog copypasteDialog = new("Произошла ошибка",
                                                        "Невозможно скопировать код в буфер обмена.\nКод предоставлен ниже.");
                 copypasteDialog.ResponseTextBox.Text = result;
 
@@ -239,12 +243,10 @@ namespace PointEditor
                         bypassNamingWarning = nameLengthWarnDialog.BypassDialog;
                     }
 
-                    Shape[] occurences = MainCanvas.Children.OfType<Shape>()
-                                        .Where(x => x.Name == renameDialog.ResponseText).ToArray();
+                    int occurences = MainCanvas.Children.OfType<Shape>()
+                                        .Where(x => x.Name == renameDialog.ResponseText).Count();
 
-                    if (occurences.Length > 0)
-                        result += occurences.Length;
-
+                    result += occurences > 0 ? occurences : "";
 
                     PolygonList.SelectedItem = result;
 
@@ -364,12 +366,131 @@ namespace PointEditor
 
         private void TreeView_AddFolder(object sender, RoutedEventArgs e)
         {
-            MessageBoxDialog moveDialog = new("Новая папка", "Введите название новой папки");
-            if (moveDialog.ShowDialog() == true)
+            MessageBoxDialog addFolderDialog = new("Новая папка", "Введите название новой папки");
+            if (addFolderDialog.ShowDialog() == true)
+                AddToTreeView<TreeViewFolder>(addFolderDialog.ResponseText);
+        }
+
+        private void TreeView_AddPoly(object sender, RoutedEventArgs e)
+        {
+            MessageBoxDialog addFolderDialog = new("Новая фигура", "Введите название новой фигуры");
+            if (addFolderDialog.ShowDialog() == true)
             {
-                
-                l_TreeItems.Where(x => x.GetType() == typeof(TreeViewFolder)).Where(x => x.GetStoredValue() == ((TreeViewItem)SceneTreeView.SelectedItem).Header).Single().l_Child.Add(new TreeViewFolder("Сцена"));
+                AddPolygon newAction = new AddPolygon();
+                string result = addFolderDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
+                result = result.Length == 0 ? $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}" : result;
+
+            newAction.Do(new object[] { NewColorPicker.SelectedColor.Safe(),
+                                        Colors.Transparent, // TODO: Fill color
+                                        3,result }  );
+
+                l_Actions.Add(newAction);
+
+                AddToTreeView<TreeViewShape>(newAction.Figure.Name, new object[] { newAction.Figure });
+
+                UpdateList();
+                UpdateActionsList();
             }
+        }
+
+        internal void AddToTreeView<T>(string name, object[]? args = null) where T : TreeViewGeneric
+        {
+            name = name.Length > 0 || name == string.Empty ? "Новый элемент" : name;
+            int occurences = 0;
+
+            TreeViewGeneric parent = FindSelected();
+
+            if (parent != null)
+            {
+                occurences = parent.l_Child.Where(x => x.s_Name == name).Count();
+                name += occurences > 0 ? occurences : "";
+
+                if (typeof(T) == typeof(TreeViewFolder))
+                {
+                    TreeViewFolder folder = new(name);
+                    folder.SetParent(parent);
+                    parent.l_Child.Add(folder);
+                }
+                else if (typeof(T) == typeof(TreeViewShape))
+                {
+                    TreeViewShape shape = new((Shape)args[0]);
+                    shape.SetParent(parent);
+                    parent.l_Child.Add(shape);
+                }
+
+                UpdateTreeView();
+            }
+        }
+
+
+        private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
+        private TreeViewGeneric FindSelected()
+        {
+            string searchName = (string)((TreeViewItem)SceneTreeView.SelectedItem)?.Header;
+            TreeViewGeneric parent = l_TreeItems.Where(x => x.s_Name == searchName).SingleOrDefault();
+
+            if (parent == null)
+                parent = l_TreeItems[0].FindChild(searchName);
+
+            return parent;
+        }
+
+        private void TreeViewRename()
+        {
+            TreeViewGeneric selected = FindSelected();
+
+            if (selected == null)
+                return;
+
+            MessageBoxDialog renameDialog = new("Переименовать", $"{selected.s_Name} будет переименован в");
+
+            if (renameDialog.ShowDialog() == true &&
+                renameDialog.ResponseText.Length > 0)
+            {
+                string result = renameDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
+
+                if (result.Length > 16 &&
+                    !bypassNamingWarning)
+                {
+                    Utility.Dialogs.ExceptionDialog nameLengthWarnDialog = new("Предупреждение",
+                                                                  $"Рекомендуем укоротить название до 16 символов и меньше.");
+
+                    if (nameLengthWarnDialog.ShowDialog() == true &&
+                        nameLengthWarnDialog.isCancelled)
+                    {
+                        // TODO Убрать рекурсию
+                        TreeViewRename();
+                        return;
+                    }
+
+                    bypassNamingWarning = nameLengthWarnDialog.BypassDialog;
+                }
+
+                int occurences = selected.GetParent().l_Child.Where(x => x.s_Name == result).Count();
+                result += occurences > 0 ? occurences : "";
+                selected.s_Name = result;
+                if (selected.GetType() == typeof(TreeViewShape))
+                    (((TreeViewShape)selected)).GetStoredValue().Name = result;
+                //IAction newRenameAction = new RenameObject();
+
+                //newRenameAction.Do(new object[] { selected, result });
+
+                //l_Actions.Add(newRenameAction);
+                UpdateList();
+                UpdateTreeView();
+                //UpdateActionsList();
+            }
+        }
+
+        private void TreeView_DeleteItem(object sender, RoutedEventArgs e)
+        {
+            TreeViewGeneric selected = FindSelected();
+
+            if (selected == null)
+                return;
+
+            selected.GetParent()?.l_Child.Remove(selected);
+
             UpdateTreeView();
         }
     }

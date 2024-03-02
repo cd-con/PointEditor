@@ -17,5 +17,7 @@ namespace PointEditor.Utility
         /// <param name="color"></param>
         /// <returns></returns>
         public static SolidColorBrush ToBrush(this Color color) => new(color);
+
+        public static SolidColorBrush ToBrush(this System.Drawing.Color color) => new() { Color = Color.FromArgb(color.A, color.R, color.G, color.B)};
     }
 }

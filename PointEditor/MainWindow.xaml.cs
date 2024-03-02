@@ -2,6 +2,7 @@
 using PointEditor.Utility.Actions;
 using PointEditor.Utility.Actions.Objects;
 using PointEditor.Utility.Actions.Objects.Generic;
+using PointEditor.Utility.TreeViewStorage;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,6 +24,7 @@ namespace PointEditor
     public partial class MainWindow : Window
     {
         private List<IAction> l_Actions = new();
+        private List<TreeViewGeneric> l_TreeItems = new();
 
         private const int APP_VERSION = 20;
 
@@ -39,6 +41,8 @@ namespace PointEditor
             InitializeComponent();
             CheckUpdates();
             MainCanvas = mainCanvas;
+            l_TreeItems.Add(new TreeViewFolder("Сцена"));
+            UpdateTreeView();
         }
 
         public async void CheckUpdates()
@@ -72,6 +76,13 @@ namespace PointEditor
         }
 
         public void UpdateList() => PolygonList.ItemsSource = MainCanvas.Children.OfType<Shape>().Select(x => x.Name);
+
+        public void UpdateTreeView()
+        {
+            SceneTreeView.Items.Clear();
+            SceneTreeView.Items.Add(l_TreeItems[0].Get());
+        }
+
         public void UpdateActionsList() => ActionsList.ItemsSource = l_Actions.Select(x => $"{l_Actions.IndexOf(x) + 1}. " + x.ToString());
 
         private void NewColorPicker_ChangedColor(object sender, RoutedPropertyChangedEventArgs<Color?> e)
@@ -349,6 +360,17 @@ namespace PointEditor
         {
             l_Actions.Clear();
             UpdateActionsList();
+        }
+
+        private void TreeView_AddFolder(object sender, RoutedEventArgs e)
+        {
+            MessageBoxDialog moveDialog = new("Новая папка", "Введите название новой папки");
+            if (moveDialog.ShowDialog() == true)
+            {
+                
+                l_TreeItems.Where(x => x.GetType() == typeof(TreeViewFolder)).Where(x => x.GetStoredValue() == ((TreeViewItem)SceneTreeView.SelectedItem).Header).Single().l_Child.Add(new TreeViewFolder("Сцена"));
+            }
+            UpdateTreeView();
         }
     }
 }

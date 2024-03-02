@@ -45,14 +45,18 @@
                         <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="6,103,0,0" VerticalAlignment="Top" Width="110" Click="Resize_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
                         <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="6,128,0,0" VerticalAlignment="Top" Width="110" Click="Move_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
                         <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="6,153,0,0" VerticalAlignment="Top" Width="110" Click="Smooth_Click" Grid.Row="1" Background="#00DDDDDD" Foreground="White"/>
-                        <ListBox SelectionMode="Extended" x:Name="PolygonList" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="121,3,0,0" Height="177" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.RowSpan="2">
-                            <!--<ListBox.CommandBindings>
-                                <CommandBinding Command="Deselect" Executed="ClearPolygonListSelection"/>
-                            </ListBox.CommandBindings>
-                            <ListBox.InputBindings>
-                                <KeyBinding Key="Esc" Command="Deselect"/>
-                            </ListBox.InputBindings>-->
+                        <ListBox SelectionMode="Extended" x:Name="PolygonList" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="121,3,0,0" Height="48" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.RowSpan="2">
                         </ListBox>
+                        <TreeView x:Name="SceneTreeView" Margin="121,50,0,0" Height="124" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.Row="1">
+                            <TreeView.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Добавить папку" Click="TreeView_AddFolder"/>
+                                    <MenuItem Header="Добавить фигуру">
+                                        <MenuItem Header="Полигон"/>
+                                    </MenuItem>
+                                </ContextMenu>
+                            </TreeView.ContextMenu>
+                        </TreeView>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Действия" 

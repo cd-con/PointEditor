@@ -11,9 +11,9 @@ internal abstract class TreeViewGeneric
     internal enum VIEWTYPE
     {
         None = 0,
-        Folder = 1
+        Folder = 1,
+        Scene = 2
     }
-
 
     public VIEWTYPE ViewIcon = VIEWTYPE.None;
 

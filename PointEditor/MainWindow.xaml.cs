@@ -75,74 +75,47 @@ namespace PointEditor
             }
         }
 
-        public void UpdateList() => PolygonList.ItemsSource = MainCanvas.Children.OfType<Shape>().Select(x => x.Name);
-
         public void UpdateTreeView()
         {
             SceneTreeView.Items.Clear();
-            SceneTreeView.Items.Add(l_TreeItems[0].Get());
+
+            // Этот код нужен на будущее
+            // Когда я сделаю импорт нескольких сцен
+            foreach (TreeViewGeneric item in l_TreeItems)
+                SceneTreeView.Items.Add(item.Get());
         }
 
         public void UpdateActionsList() => ActionsList.ItemsSource = l_Actions.Select(x => $"{l_Actions.IndexOf(x) + 1}. " + x.ToString());
 
         private void NewColorPicker_ChangedColor(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
+            if (SceneTreeView == null)
+                return;
 
-            if (PolygonList == null)
+            TreeViewGeneric? selected = FindSelected();
+
+            if (selected == null || selected is not TreeViewShape)
                 return;
 
             Color newColor = e.NewValue.Safe();
-            if (PolygonList.SelectedItems == null || PolygonList.SelectedItems.Count == 0)
+
+            // TODO Вынести в отдельную настройку
+            /*if (PolygonList.SelectedItems == null || PolygonList.SelectedItems.Count == 0)
             {
                 //foreach (var polygon in polygons)
                 //    polygon.Stroke = Preview.Fill;
             }
             else
             {
-                foreach (string polyName in PolygonList.SelectedItems)
-                    MainCanvas.Children.OfType<Shape>().Where(x => x.Name == polyName).Single().Stroke = NewColorPicker.SelectedColor.Safe().ToBrush();
-            }
-        }
-
-        // Add new polygon
-        private void PolygonAdd_Click(object sender, RoutedEventArgs e)
-        {
-            IAction newAction = new AddPolygon();
-
-            newAction.Do(new object[] { NewColorPicker.SelectedColor.Safe(),
-                                        Colors.Transparent, // TODO: Fill color
-                                        3,
-                                        $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}"});
-
-            l_Actions.Add(newAction);
-
-            UpdateList();
-            UpdateActionsList();
-
-            PolygonList.SelectedItem = mainCanvas.Children.OfType<Shape>().Last().Name;
-        }
-
-        private void DeleteItems(object sender, RoutedEventArgs e)
-        {
-            foreach (string itemName in PolygonList.SelectedItems)
-            {
-                Shape item = MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single();
-
-                IAction newAction = new DeleteObject();
-
-                newAction.Do(new object[] { item });
-                l_Actions.Add(newAction);
-            }
-
-            UpdateList();
-            UpdateActionsList();
+               foreach (string polyName in PolygonList.SelectedItems)*/
+            (selected.GetStoredValue() as Polygon).Stroke = NewColorPicker.SelectedColor.Safe().ToBrush();
+            //}
         }
 
         private void MainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ButtonState == MouseButtonState.Pressed)
             {
-                //Shape selectedShape = MainCanvas.Children.OfType<Shape>().Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single();
                 TreeViewGeneric selected = FindSelected();
 
                 if (selected == null || selected.GetType() != typeof(TreeViewShape))
@@ -187,9 +160,12 @@ namespace PointEditor
                                                        "Невозможно скопировать код в буфер обмена.\nКод предоставлен ниже.");
                 copypasteDialog.ResponseTextBox.Text = result;
 
-                Cursor = null; // Не забываем сбросить курсор
 
                 copypasteDialog.ShowDialog();
+            }
+            finally
+            {
+                Cursor = null; // Не забываем сбросить курсор
             }
         }
 
@@ -200,64 +176,15 @@ namespace PointEditor
                 double.TryParse(resizeDialog.ResponseText, NumberStyles.Float, CultureInfo.InvariantCulture, out double factor) &&
                 factor != 0)
             {
-                foreach (string itemName in PolygonList.SelectedItems)
-                {
+                TreeViewGeneric? selected = FindSelected();
+
+                if (selected is TreeViewShape) { 
+                    Polygon? shape = selected.GetStoredValue() as Polygon;
                     IAction newResizeAction = new ResizePolyGeneric();
-                    newResizeAction.Do(new object[] { factor, ((Polygon)MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single()).Points });
+                    newResizeAction.Do(new object[] { factor, shape.Points });
                     l_Actions.Add(newResizeAction);
                 }
                 UpdateActionsList();
-            }
-        }
-
-        private void PolygonList_MouseDoubleClick(object sender, MouseButtonEventArgs e) => Rename();
-
-        private void Rename()
-        {
-            if (PolygonList.SelectedItems.Count > 0)
-            {
-                Shape selected = MainCanvas.Children.OfType<Shape>()
-                                .Where(x => x.Name == PolygonList.SelectedItem.ToString()).Single();
-
-                MessageBoxDialog renameDialog = new("Переименовать", $"{selected.Name} будет переименован в");
-
-                if (renameDialog.ShowDialog() == true &&
-                    renameDialog.ResponseText.Length > 0)
-                {
-                    string result = renameDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
-
-                    if (result.Length > 16 &&
-                        !bypassNamingWarning)
-                    {
-                        Utility.Dialogs.ExceptionDialog nameLengthWarnDialog = new("Предупреждение",
-                                                                      $"Рекомендуем укоротить название до 16 символов и меньше.");
-
-                        if (nameLengthWarnDialog.ShowDialog() == true &&
-                            nameLengthWarnDialog.isCancelled)
-                        {
-                            // TODO Убрать рекурсию
-                            Rename();
-                            return;
-                        }
-
-                        bypassNamingWarning = nameLengthWarnDialog.BypassDialog;
-                    }
-
-                    int occurences = MainCanvas.Children.OfType<Shape>()
-                                        .Where(x => x.Name == renameDialog.ResponseText).Count();
-
-                    result += occurences > 0 ? occurences : "";
-
-                    PolygonList.SelectedItem = result;
-
-                    IAction newRenameAction = new RenameObject();
-
-                    newRenameAction.Do(new object[] { selected, result });
-
-                    l_Actions.Add(newRenameAction);
-                    UpdateList();
-                    UpdateActionsList();
-                }
             }
         }
 
@@ -265,24 +192,28 @@ namespace PointEditor
         {
             // Oh boy, here we go
             MessageBoxDialog smootherDialog = new("Смягчить", "Введите значение");
+
             if (smootherDialog.ShowDialog() == true &&
-                smootherDialog.ResponseText.Length > 0)
+                !string.IsNullOrEmpty(smootherDialog.ResponseText))
             {
+                TreeViewGeneric? selected = FindSelected();
+
                 if (int.TryParse(smootherDialog.ResponseText, out int smooth_factor) &&
-                    smooth_factor > 0 &&
-                    PolygonList.SelectedItem != null)
+                    smooth_factor > 0 && selected != null)
                 {
 
-                    foreach (string itemName in PolygonList.SelectedItems)
+                    if (selected.GetType() == typeof(TreeViewShape))
                     {
-                        Polygon poly = (Polygon)MainCanvas.Children.OfType<Shape>()
-                                               .Where(x => x.Name == itemName).Single();
+                        selected = selected as TreeViewShape;
+                        Shape? selectedFigure = selected?.GetStoredValue() as Shape;
                         // Проверяем, есть ли в фигуре точки
-                        if (poly.Points.Count > 0)
+
+
+                        if (selectedFigure is Polygon { Points.Count: > 0 })
                         {
                             IAction newAction = new SmoothPolygon();
 
-                            newAction.Do(new object[] { smooth_factor, poly });
+                            newAction.Do(new object[] { smooth_factor, selectedFigure });
 
                             l_Actions.Add(newAction);
                         }
@@ -290,25 +221,22 @@ namespace PointEditor
                         {
                             if (!bypassNoPointsWarning)
                             {
-                                Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Попытка сглаживания фигуры {itemName} не удалась. Количество точек в фигуре должно быть больше 0");
-                                if (exDialog.ShowDialog() == true && exDialog.isCancelled)
-                                {
-                                    // Логика отката действий
-                                }
+                                Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Попытка сглаживания фигуры {selectedFigure.Name} не удалась. Количество точек в фигуре должно быть больше 0");
+                                if (exDialog.ShowDialog() == true && exDialog.isCancelled) { }
                                 bypassNoPointsWarning = exDialog.BypassDialog;
                             }
                         }
+                        UpdateActionsList();
                     }
-                    UpdateActionsList();
                 }
-                else
+            }
+            else
+            {
+                if (!bypassInvalidNumber)
                 {
-                    if (!bypassInvalidNumber)
-                    {
-                        Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Значение `{smootherDialog.ResponseText}` не является валидным для этой операции.");
-                        exDialog.ShowDialog();
-                        bypassInvalidNumber = exDialog.BypassDialog;
-                    }
+                    Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Значение `{smootherDialog.ResponseText}` не является валидным для этой операции.");
+                    exDialog.ShowDialog();
+                    bypassInvalidNumber = exDialog.BypassDialog;
                 }
             }
         }
@@ -323,11 +251,11 @@ namespace PointEditor
                     int.TryParse(coords[0], out int x) &&
                     int.TryParse(coords[1], out int y))
                 {
-                    foreach (string itemName in PolygonList.SelectedItems)
-                    {
+                    TreeViewGeneric? selected = FindSelected();
+                    if (selected is TreeViewShape) {
                         IAction newAction = new MovePolyGeneric();
 
-                        newAction.Do(new object[] { new Point(x, y), ((Polygon)MainCanvas.Children.OfType<Shape>().Where(x => x.Name == itemName).Single()).Points });
+                        newAction.Do(new object[] { new Point(x, y), (selected.GetStoredValue() as Polygon).Points});
 
                         l_Actions.Add(newAction);
                     }
@@ -354,7 +282,6 @@ namespace PointEditor
                     l_Actions.Remove(revertAction);
                 }
             }
-            UpdateList();
             UpdateActionsList();
         }
 
@@ -364,41 +291,60 @@ namespace PointEditor
             UpdateActionsList();
         }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TreeView_AddFolder(object sender, RoutedEventArgs e)
         {
-            MessageBoxDialog addFolderDialog = new("Новая папка", "Введите название новой папки");
+            MessageBoxDialog addFolderDialog = new("Новая группа", "Введите название новой группы");
+
             if (addFolderDialog.ShowDialog() == true)
                 AddToTreeView<TreeViewFolder>(addFolderDialog.ResponseText);
         }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TreeView_AddPoly(object sender, RoutedEventArgs e)
         {
-            MessageBoxDialog addFolderDialog = new("Новая фигура", "Введите название новой фигуры");
-            if (addFolderDialog.ShowDialog() == true)
+            MessageBoxDialog addShape = new("Новая фигура", "Введите название новой фигуры");
+            if (addShape.ShowDialog() == true)
             {
                 AddPolygon newAction = new AddPolygon();
-                string result = addFolderDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
-                result = result.Length == 0 ? $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}" : result;
+                string result = addShape.ResponseText.Replace(' ', '_').Replace('.', '_');
+                result = string.IsNullOrEmpty(result) ? $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}" : result;
 
-            newAction.Do(new object[] { NewColorPicker.SelectedColor.Safe(),
+                if (char.IsDigit(result[0]))
+                    result = result.Replace(result[0], '_');
+
+                newAction.Do(new object[] { NewColorPicker.SelectedColor.Safe(),
                                         Colors.Transparent, // TODO: Fill color
-                                        3,result }  );
+                                        3, result });
 
                 l_Actions.Add(newAction);
 
                 AddToTreeView<TreeViewShape>(newAction.Figure.Name, new object[] { newAction.Figure });
 
-                UpdateList();
                 UpdateActionsList();
             }
         }
 
+        /// <summary>
+        /// Универсальный метод добавление TreeView элементов в TreeView
+        /// </summary>
+        /// <typeparam name="T">Тип, наследуемый от TreeViewGeneric</typeparam>
+        /// <param name="name"></param>
+        /// <param name="args"></param>
         internal void AddToTreeView<T>(string name, object[]? args = null) where T : TreeViewGeneric
         {
-            name = name.Length > 0 || name == string.Empty ? "Новый элемент" : name;
+            name = string.IsNullOrEmpty(name) ? "Новый элемент" : name;
             int occurences = 0;
 
-            TreeViewGeneric parent = FindSelected();
+            TreeViewGeneric? parent = FindSelected();
 
             if (parent != null)
             {
@@ -424,20 +370,22 @@ namespace PointEditor
 
 
         private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
-        private TreeViewGeneric FindSelected()
+        private TreeViewGeneric? FindSelected()
         {
-            string searchName = (string)((TreeViewItem)SceneTreeView.SelectedItem)?.Header;
-            TreeViewGeneric parent = l_TreeItems.Where(x => x.s_Name == searchName).SingleOrDefault();
+            string? searchName = (string?)((TreeViewItem)SceneTreeView.SelectedItem)?.Header;
 
-            if (parent == null)
-                parent = l_TreeItems[0].FindChild(searchName);
+            if (string.IsNullOrEmpty(searchName)) return null;
+
+            TreeViewGeneric? parent = l_TreeItems.Where(x => x.s_Name == searchName).SingleOrDefault();
+
+            parent ??= l_TreeItems[0].FindChild(searchName);
 
             return parent;
         }
 
         private void TreeViewRename()
         {
-            TreeViewGeneric selected = FindSelected();
+            TreeViewGeneric? selected = FindSelected();
 
             if (selected == null)
                 return;
@@ -466,17 +414,37 @@ namespace PointEditor
                     bypassNamingWarning = nameLengthWarnDialog.BypassDialog;
                 }
 
-                int occurences = selected.GetParent().l_Child.Where(x => x.s_Name == result).Count();
-                result += occurences > 0 ? occurences : "";
-                selected.s_Name = result;
-                if (selected.GetType() == typeof(TreeViewShape))
-                    (((TreeViewShape)selected)).GetStoredValue().Name = result;
+                TreeViewGeneric? parent = selected.GetParent();
+                int occurences = 0;
+                if (parent != null)
+                {
+                    occurences = parent.l_Child.Where(x => x.s_Name == result).Count();
+                    result += occurences > 0 ? occurences : "";
+                    selected.s_Name = result;
+
+                    // Костыль
+                    if (selected.GetType() == typeof(TreeViewShape))
+                    {
+
+                        if (char.IsDigit(result[0]))
+                            result = result.Replace(result[0], '_');
+
+                        ((Shape)selected.GetStoredValue()).Name = result;
+                    }
+                }
+                else
+                {
+                    // Если у нас оказался корневой каталог
+                    occurences = l_TreeItems.Where(x => x.s_Name == result).Count();
+                    result += occurences > 0 ? occurences : "";
+
+                    selected.s_Name = result;
+                }
                 //IAction newRenameAction = new RenameObject();
 
                 //newRenameAction.Do(new object[] { selected, result });
 
                 //l_Actions.Add(newRenameAction);
-                UpdateList();
                 UpdateTreeView();
                 //UpdateActionsList();
             }
@@ -484,14 +452,57 @@ namespace PointEditor
 
         private void TreeView_DeleteItem(object sender, RoutedEventArgs e)
         {
-            TreeViewGeneric selected = FindSelected();
+            TreeViewGeneric? selected = FindSelected();
 
             if (selected == null)
                 return;
 
+            if (selected.GetType() == typeof(TreeViewShape))
+                MainCanvas.Children.Remove((Shape)selected.GetStoredValue());
+
             selected.GetParent()?.l_Child.Remove(selected);
 
             UpdateTreeView();
+        }
+
+        private void ClearContextActions()
+        {
+            ItemActionsRoot.Items.Clear();
+            ItemActionsRoot.Items.Add(new MenuItem() { Header = "Пусто", IsEnabled = false });
+        }
+
+        private void ShapeContextActions()
+        {
+            ItemActionsRoot.Items.Clear();
+
+            MenuItem scale = new() { Header = "Изменить размер" };
+            scale.Click += Resize_Click;
+
+            MenuItem move = new() { Header = "Сместить" };
+            move.Click += Move_Click;
+
+            MenuItem smooth = new() { Header = "Смягчить" };
+            smooth.Click += Smooth_Click;
+
+            ItemActionsRoot.Items.Add(move);
+            ItemActionsRoot.Items.Add(scale);
+            ItemActionsRoot.Items.Add(smooth);
+        }
+
+        private void MenuContentHandler(object sender, MouseButtonEventArgs e)
+        {
+            TreeViewGeneric? selected = FindSelected();
+
+            if (selected is TreeViewShape)
+            {
+                AddToTreeRoot.IsEnabled = false;
+                ShapeContextActions();
+            }
+            else
+            {
+                AddToTreeRoot.IsEnabled = true;
+                ClearContextActions();
+            }
         }
     }
 }

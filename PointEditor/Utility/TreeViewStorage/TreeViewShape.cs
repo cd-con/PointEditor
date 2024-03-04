@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Linq;
+using System.Windows.Controls;
 using System.Windows.Shapes;
 
 namespace PointEditor.Utility.TreeViewStorage
@@ -30,5 +31,7 @@ namespace PointEditor.Utility.TreeViewStorage
         public override Shape GetStoredValue() => s_Shape;
 
         public override void SetStoredValue(object value) => s_Shape = (Shape)value;
+
+        public override string ToString() => s_Shape.Name;
     }
 }

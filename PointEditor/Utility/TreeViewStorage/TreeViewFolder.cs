@@ -14,7 +14,6 @@ internal class TreeViewFolder : TreeViewGeneric
     {
         TreeViewItem t_Item = new()
         {
-            Tag = "FOLDER",
             Header = s_Name,
             Foreground = System.Drawing.Color.White.ToBrush()
         };

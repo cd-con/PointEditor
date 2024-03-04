@@ -30,7 +30,7 @@
                                           SelectedColor="Gold" TabBackground="#FF05001E" TabForeground="White" Background="#FF05001E" BorderBrush="#FF2E53BF" DropDownBackground="#FF05001E" DropDownBorderBrush="#FF2E53BF" HeaderBackground="#FF05001E" HeaderForeground="White" Height="23" VerticalAlignment="Top"/>
                     </Grid>
                 </GroupBox>
-                <GroupBox Header="Инструменты" 
+                <GroupBox Header="Элементы" 
                           Height="205" 
                           VerticalAlignment="Top" 
                           Margin="0,75,0,0">
@@ -39,30 +39,32 @@
                             <RowDefinition Height="5*"/>
                             <RowDefinition Height="153*"/>
                         </Grid.RowDefinitions>
-                        <Button Content="Добавить полигон" HorizontalAlignment="Left" Margin="6,35,0,0" VerticalAlignment="Top" Click="PolygonAdd_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1" Width="110"/>
-                        <Button Content="Удалить полигон" HorizontalAlignment="Left" Margin="6,59,0,0" VerticalAlignment="Top" Click="DeleteItems" Width="110" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
-                        <Button Content="Получить точки" HorizontalAlignment="Left" Margin="6,3,0,0" VerticalAlignment="Top" Click="GenerateCode" Width="110" Background="#01DDDDDD" Foreground="White" Grid.RowSpan="2"/>
-                        <Button x:Name="Scale" Content="Изменить размер" HorizontalAlignment="Left" Margin="6,103,0,0" VerticalAlignment="Top" Width="110" Click="Resize_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
-                        <Button x:Name="Move" Content="Сместить" HorizontalAlignment="Left" Margin="6,128,0,0" VerticalAlignment="Top" Width="110" Click="Move_Click" Background="#01DDDDDD" Foreground="White" Grid.Row="1"/>
-                        <Button x:Name="Smooth" Content="Смягчить" HorizontalAlignment="Left" Margin="6,153,0,0" VerticalAlignment="Top" Width="110" Click="Smooth_Click" Grid.Row="1" Background="#00DDDDDD" Foreground="White"/>
-                        <ListBox SelectionMode="Extended" x:Name="PolygonList" MouseDoubleClick="PolygonList_MouseDoubleClick" Margin="121,3,0,0" Height="48" VerticalAlignment="Top" Background="Transparent" Foreground="White" Grid.RowSpan="2">
-                        </ListBox>
+                        <Button Content="Получить точки" HorizontalAlignment="Center" Margin="0,147,0,0" VerticalAlignment="Top" Click="GenerateCode" Width="246" Background="#01DDDDDD" Foreground="White" Height="19" Grid.Row="1"/>
+                        <!-- Оставлен временно, чтобы код не сыпал ошибками -->
                         <TreeView x:Name="SceneTreeView" 
-                                  Margin="121,50,0,0" 
-                                  Height="124" 
+                                  Margin="0,4,0,0" 
+                                  Height="134" 
                                   VerticalAlignment="Top" 
                                   Background="Transparent" 
                                   Foreground="White" 
                                   Grid.Row="1"
-                                  PreviewMouseDoubleClick="SceneTreeView_Rename">
+                                  PreviewMouseDoubleClick="SceneTreeView_Rename"
+                                  PreviewMouseRightButtonUp="MenuContentHandler" HorizontalAlignment="Center" Width="246">
                             <TreeView.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="Добавить папку" Click="TreeView_AddFolder"/>
-                                    <MenuItem Header="Добавить фигуру">
-                                        <MenuItem Header="Полигон" Click="TreeView_AddPoly"/>
+                                    <MenuItem x:Name="AddToTreeRoot"
+                                        Header="Добавить...">
+                                        <MenuItem Header="Группу" 
+                                                  Click="TreeView_AddFolder"/>
+                                        <MenuItem Header="Фигуру">
+                                            <MenuItem Header="Полигон" Click="TreeView_AddPoly"/>
+                                        </MenuItem>
                                     </MenuItem>
                                     <Separator/>
                                     <MenuItem Header="Удалить элемент" Click="TreeView_DeleteItem"/>
+                                    <Separator/>
+                                    <MenuItem x:Name="ItemActionsRoot" 
+                                              Header="Дополнительные действия"/>
                                 </ContextMenu>
                             </TreeView.ContextMenu>
                         </TreeView>

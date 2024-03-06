@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
@@ -10,29 +9,23 @@ namespace PointEditor.Utility.Actions.Objects;
 /// </summary>
 internal class SmoothPolygon : IAction
 {
-    int initialFactor;
-    Polygon poly;
+    PointCollection initial;
+    Polygon smoothered;
     public void Do(object[] args)
     {
         // Args
         // 0 - factor
         // 1 - points
-        poly = (Polygon)args[1];
-
-        initialFactor = poly.Points.Count + 1;
-
+        smoothered = (Polygon)args[1];
+        initial = smoothered.Points.Clone();
         // Проверяем, совпадает ли последняя точка с начальной
-        if (poly.Points.Last() != poly.Points.First())
-            // Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
-            poly.Points.Add(poly.Points.First());
+        if (smoothered.Points.Last() != smoothered.Points.First())
+            smoothered.Points.Add(smoothered.Points.First());// Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
         // Сглаживаем
-        poly.Points = Utils.SmootherPolygonCubic(poly.Points, (int)args[0]);
+        smoothered.Points = Utils.SmootherPolygonCubic(smoothered.Points, (int)args[0]);
     }
 
-    public void Undo()
-    {
-        poly.Points = Utils.SmootherPolygonCubic(poly.Points, initialFactor);
-    }
+    public void Undo() => smoothered.Points = initial;
 
     public override string ToString() => "Смягчение фигуры";
 

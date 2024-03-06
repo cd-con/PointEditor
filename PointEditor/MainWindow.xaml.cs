@@ -113,26 +113,36 @@ namespace PointEditor
             //}
         }
 
-        private void MainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+        private Shape selectedShape;
+        private void MainCanvas_MouseUp(object sender, MouseButtonEventArgs e) => selectedShape = null;
+        private void MainCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.ButtonState == MouseButtonState.Pressed)
+            if (e.LeftButton == MouseButtonState.Pressed && selectedShape != null)
             {
-                TreeViewGeneric? selected = FindSelected();
-
-                if (selected == null || selected.GetType() != typeof(TreeViewShape))
-                    return;
-
-                Shape selectedShape = ((TreeViewShape)selected).GetStoredValue();
                 if (selectedShape.GetType() == typeof(Polygon))
-                {
-                    AddPoint newAction = new AddPoint();
-                    newAction.Do(new object[] { ((Polygon)selectedShape).Points, e.GetPosition(mainCanvas) });
-                    l_Actions.Add((newAction));
-                    UpdateActionsList();
-                }
+                    ((Polygon)selectedShape).Points[((Polygon)selectedShape).Points.Count - 1] = e.GetPosition(MainCanvas);
                 else
                     MessageBox.Show("Неподдерживаемый тип фигуры", "Ошибка!");
             }
+        }
+
+        private void MainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            TreeViewGeneric? selected = FindSelected();
+
+            if (selected == null || selected.GetType() != typeof(TreeViewShape))
+                return;
+
+            selectedShape = ((TreeViewShape)selected).GetStoredValue();
+            if (selectedShape.GetType() == typeof(Polygon))
+            {
+                AddPoint newAction = new AddPoint();
+                newAction.Do(new object[] { ((Polygon)selectedShape).Points, e.GetPosition(mainCanvas) });
+                l_Actions.Add((newAction));
+                UpdateActionsList();
+            }
+            else
+                MessageBox.Show("Неподдерживаемый тип фигуры", "Ошибка!");
         }
 
         private void GetCode_Click(object sender, RoutedEventArgs e)
@@ -445,7 +455,6 @@ namespace PointEditor
                 {
                     occurences = parent.l_Child.Where(x => x.s_Name == result).Count();
                     result += occurences > 0 ? occurences : "";
-                    selected.s_Name = result;
 
                     // Костыль
                     if (selected.GetType() == typeof(TreeViewShape))
@@ -462,16 +471,14 @@ namespace PointEditor
                     // Если у нас оказался корневой каталог
                     occurences = l_TreeItems.Where(x => x.s_Name == result).Count();
                     result += occurences > 0 ? occurences : "";
-
-                    selected.s_Name = result;
                 }
-                //IAction newRenameAction = new RenameObject();
+                IAction newRenameAction = new RenameObject();
 
-                //newRenameAction.Do(new object[] { selected, result });
+                newRenameAction.Do(new object[] { selected, result });
 
-                //l_Actions.Add(newRenameAction);
+                l_Actions.Add(newRenameAction);
                 UpdateTreeView();
-                //UpdateActionsList();
+                UpdateActionsList();
             }
         }
 
@@ -481,6 +488,13 @@ namespace PointEditor
 
             TreeViewItem_Remove(selected);
 
+            DeleteObject newAction = new();
+
+            newAction.Do(new object[] { selected });
+
+            l_Actions.Add(newAction);
+
+            UpdateActionsList();
             UpdateTreeView();
         }
 
@@ -498,7 +512,7 @@ namespace PointEditor
             }
         }
 
-        private static void TreeViewItem_Remove(TreeViewGeneric? item)
+        internal void TreeViewItem_Remove(TreeViewGeneric? item)
         {
             if (item == null) return;
 

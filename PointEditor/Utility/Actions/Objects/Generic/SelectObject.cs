@@ -1,17 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PointEditor.Utility.Actions.Objects.Generic
 {
     // TODO
     internal class SelectObject : IAction
     {
+        string selected;
         public void Do(object[] args)
         {
-            throw new NotImplementedException();
+            // Args
+            // 0 - selected object
+            selected = (string)args[0];
         }
 
         public void Undo()

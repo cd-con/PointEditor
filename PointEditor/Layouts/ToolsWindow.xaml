@@ -1,0 +1,98 @@
+﻿<Window x:Class="PointEditor.Layouts.ToolsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PointEditor.Layouts"
+        mc:Ignorable="d"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        WindowStyle="ToolWindow"
+        Title="Инструменты" Height="450" 
+        Width="300">
+    <Grid Background="#FF05001E">
+        <GroupBox Header="Карандаш" Height="69" VerticalAlignment="Top" Foreground="White">
+            <Grid>
+                <xctk:ColorPicker x:Name="NewColorPicker" 
+                              SelectedColorChanged="NewColorPicker_ChangedColor" 
+                              Margin="10,10,10,0"
+                              SelectedColor="Gold" TabBackground="#FF05001E" TabForeground="White" Background="#FF05001E" BorderBrush="#FF2E53BF" DropDownBackground="#FF05001E" DropDownBorderBrush="#FF2E53BF" HeaderBackground="#FF05001E" HeaderForeground="White" Height="23" VerticalAlignment="Top"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Элементы" 
+              Height="205" 
+              VerticalAlignment="Top" 
+              Margin="0,75,0,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="5*"/>
+                    <RowDefinition Height="153*"/>
+                </Grid.RowDefinitions>
+                <Button Content="Получить точки" HorizontalAlignment="Center" Margin="0,147,0,0" VerticalAlignment="Top" Click="GetCode_Click" Width="246" Background="#01DDDDDD" Foreground="White" Height="19" Grid.Row="1"/>
+                <!-- Оставлен временно, чтобы код не сыпал ошибками -->
+                <TreeView x:Name="SceneTreeView" 
+                      Margin="0,4,0,0" 
+                      Height="134" 
+                      VerticalAlignment="Top" 
+                      Background="Transparent" 
+                      Foreground="White" 
+                      Grid.Row="1"
+                      PreviewMouseDoubleClick="SceneTreeView_Rename"
+                      PreviewMouseRightButtonUp="MenuContentHandler" 
+                      PreviewMouseLeftButtonDown="ClearSelection"
+                      HorizontalAlignment="Center" 
+                      Width="246">
+                    <TreeView.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="AddToTreeRoot"
+                            Header="Добавить...">
+                                <MenuItem Header="Группу" 
+                                      Click="TreeView_AddFolder"/>
+                                <MenuItem Header="Фигуру">
+                                    <MenuItem Header="Полигон" Click="TreeView_AddPoly"/>
+                                </MenuItem>
+                            </MenuItem>
+                            <Separator/>
+                            <MenuItem Header="Удалить элемент" Click="TreeView_DeleteItem"/>
+                            <Separator/>
+                            <MenuItem x:Name="ItemActionsRoot" 
+                                  Header="Дополнительные действия"/>
+                        </ContextMenu>
+                    </TreeView.ContextMenu>
+                </TreeView>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Действия" 
+              Margin="0,285,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="35"/>
+                </Grid.RowDefinitions>
+                <ListBox x:Name="ActionsList" Margin="0,5,0,0" Grid.ColumnSpan="2" Background="Transparent" Foreground="White"/>
+                <Button x:Name="Revert"
+                    Content="Откатить" 
+                    HorizontalAlignment="Left" 
+                    Margin="10,0,0,0"
+                    Width="96" Height="20" 
+                    VerticalAlignment="Center" 
+                    Click="Revert_Click" 
+                    Grid.Row="1"
+                    Background="#00DDDDDD" Foreground="White"/>
+                <Button Content="Закрепить" 
+                    HorizontalAlignment="Left" 
+                    Margin="27,0,0,0" 
+                    Width="96"
+                    Height="20" 
+                    VerticalAlignment="Center" 
+                    Click="FixRollback_Click" 
+                    Grid.Row="1" 
+                    Grid.Column="1"
+                    Background="#00DDDDDD" Foreground="White"/>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>

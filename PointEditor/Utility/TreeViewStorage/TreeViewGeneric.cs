@@ -2,8 +2,7 @@
 using System.Windows.Controls;
 
 namespace PointEditor.Utility.TreeViewStorage;
-
-internal abstract class TreeViewGeneric
+ internal abstract class TreeViewGeneric
 {
     private TreeViewGeneric? Parent;
     public List<TreeViewGeneric> l_Child = new();
@@ -36,7 +35,11 @@ internal abstract class TreeViewGeneric
             if (item.s_Name == name)
                 return item;
 
-            item.FindChild(name);
+            // Я забыл возвращать...
+            TreeViewGeneric? childItem = item.FindChild(name);
+
+            if (childItem != null)
+                return childItem;
         }
         return null;
     }

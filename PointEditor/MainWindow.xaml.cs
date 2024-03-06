@@ -35,12 +35,15 @@ namespace PointEditor
         bool bypassInvalidNumber = false;
 
         public static Canvas MainCanvas { get; private set; }
+        public static MainWindow Instance { get; private set; }
 
         public MainWindow()
         {
             InitializeComponent();
             CheckUpdates();
             MainCanvas = mainCanvas;
+            Instance = this;
+
             l_TreeItems.Add(new TreeViewFolder("Сцена"));
             UpdateTreeView();
         }
@@ -58,13 +61,11 @@ namespace PointEditor
                     s_version = s_version.TrimEnd();
                     if (int.TryParse(s_version, out int version) && version > APP_VERSION)
                     {
-
                         if (MessageBox.Show("Вышла новая версия приложения!\nОбновить сейчас?", "Обновление", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             Process.Start("Updater.exe");
                             Application.Current.Shutdown();
                         }
-
                     }
                 }
                 catch (HttpRequestException ex)
@@ -116,7 +117,7 @@ namespace PointEditor
         {
             if (e.ButtonState == MouseButtonState.Pressed)
             {
-                TreeViewGeneric selected = FindSelected();
+                TreeViewGeneric? selected = FindSelected();
 
                 if (selected == null || selected.GetType() != typeof(TreeViewShape))
                     return;
@@ -124,7 +125,7 @@ namespace PointEditor
                 Shape selectedShape = ((TreeViewShape)selected).GetStoredValue();
                 if (selectedShape.GetType() == typeof(Polygon))
                 {
-                    IAction newAction = new AddPoint();
+                    AddPoint newAction = new AddPoint();
                     newAction.Do(new object[] { ((Polygon)selectedShape).Points, e.GetPosition(mainCanvas) });
                     l_Actions.Add((newAction));
                     UpdateActionsList();
@@ -134,7 +135,7 @@ namespace PointEditor
             }
         }
 
-        private void GenerateCode(object sender, RoutedEventArgs e)
+        private void GetCode_Click(object sender, RoutedEventArgs e)
         {
             if (!MainCanvas.Children.OfType<Shape>().Any())
             {
@@ -283,12 +284,14 @@ namespace PointEditor
                 }
             }
             UpdateActionsList();
+            UpdateTreeView();
         }
 
         private void FixRollback_Click(object sender, RoutedEventArgs e)
         {
             l_Actions.Clear();
             UpdateActionsList();
+            UpdateTreeView();
         }
 
         /// <summary>
@@ -301,7 +304,15 @@ namespace PointEditor
             MessageBoxDialog addFolderDialog = new("Новая группа", "Введите название новой группы");
 
             if (addFolderDialog.ShowDialog() == true)
+            {
+                AddObject newAction = new AddObject();
+                newAction.Do(new object[] { addFolderDialog.ResponseText });
+                l_Actions.Add(newAction);
+
                 AddToTreeView<TreeViewFolder>(addFolderDialog.ResponseText);
+
+                UpdateActionsList();
+            }
         }
 
         /// <summary>
@@ -314,20 +325,27 @@ namespace PointEditor
             MessageBoxDialog addShape = new("Новая фигура", "Введите название новой фигуры");
             if (addShape.ShowDialog() == true)
             {
-                AddPolygon newAction = new AddPolygon();
+                AddObject newAction = new AddObject();
                 string result = addShape.ResponseText.Replace(' ', '_').Replace('.', '_');
                 result = string.IsNullOrEmpty(result) ? $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}" : result;
 
                 if (char.IsDigit(result[0]))
                     result = result.Replace(result[0], '_');
 
-                newAction.Do(new object[] { NewColorPicker.SelectedColor.Safe(),
-                                        Colors.Transparent, // TODO: Fill color
-                                        3, result });
+                newAction.Do(new object[] { result });
+                
+                Polygon newPolygon = new()
+                {
+                    Stroke = NewColorPicker.SelectedColor.Safe().ToBrush(),
+                    StrokeThickness = 3,
+                    Name = result
+                };
+
+                mainCanvas.Children.Add(newPolygon);
 
                 l_Actions.Add(newAction);
 
-                AddToTreeView<TreeViewShape>(newAction.Figure.Name, new object[] { newAction.Figure });
+                AddToTreeView<TreeViewShape>(newAction.s_Name, new object[] { newPolygon });
 
                 UpdateActionsList();
             }
@@ -370,17 +388,24 @@ namespace PointEditor
 
 
         private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
+
         private TreeViewGeneric? FindSelected()
         {
             string? searchName = (string?)((TreeViewItem)SceneTreeView.SelectedItem)?.Header;
 
             if (string.IsNullOrEmpty(searchName)) return null;
 
-            TreeViewGeneric? parent = l_TreeItems.Where(x => x.s_Name == searchName).SingleOrDefault();
+            TreeViewGeneric? selected = l_TreeItems.Where(x => x.s_Name == searchName).SingleOrDefault();
 
-            parent ??= l_TreeItems[0].FindChild(searchName);
+            for (int i = 0; i < l_TreeItems.Count; i++)
+            {
+                selected ??= l_TreeItems[i].FindChild(searchName);
 
-            return parent;
+                if (selected != null)
+                    return selected;
+            }
+
+            return null;
         }
 
         private void TreeViewRename()
@@ -454,15 +479,33 @@ namespace PointEditor
         {
             TreeViewGeneric? selected = FindSelected();
 
-            if (selected == null)
-                return;
-
-            if (selected.GetType() == typeof(TreeViewShape))
-                MainCanvas.Children.Remove((Shape)selected.GetStoredValue());
-
-            selected.GetParent()?.l_Child.Remove(selected);
+            TreeViewItem_Remove(selected);
 
             UpdateTreeView();
+        }
+
+        internal void TreeViewItem_Remove(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return;
+
+            TreeViewGeneric? selected = l_TreeItems.Where(x => x.s_Name == name).SingleOrDefault();
+
+            for (int i = 0; i < l_TreeItems.Count; i++)
+            {
+                selected ??= l_TreeItems[i].FindChild(name);
+
+                TreeViewItem_Remove(selected);
+            }
+        }
+
+        private static void TreeViewItem_Remove(TreeViewGeneric? item)
+        {
+            if (item == null) return;
+
+            if (item.GetType() == typeof(TreeViewShape))
+                MainCanvas.Children.Remove((Shape)item.GetStoredValue());
+
+            item.GetParent()?.l_Child.Remove(item);
         }
 
         private void ClearContextActions()
@@ -493,16 +536,33 @@ namespace PointEditor
         {
             TreeViewGeneric? selected = FindSelected();
 
+            AddToTreeRoot.IsEnabled = selected != null;
+
             if (selected is TreeViewShape)
-            {
-                AddToTreeRoot.IsEnabled = false;
                 ShapeContextActions();
-            }
             else
-            {
-                AddToTreeRoot.IsEnabled = true;
                 ClearContextActions();
-            }
+        }
+
+        private void ClearSelection(object sender, MouseButtonEventArgs e)
+        {
+            if (SceneTreeView.SelectedItem != null)
+                ClearTreeViewItemsControlSelection(SceneTreeView.Items, SceneTreeView.ItemContainerGenerator);
+        }
+
+        // Мне не нравится
+        private static void ClearTreeViewItemsControlSelection(ItemCollection ic, ItemContainerGenerator icg)
+        {
+            if ((ic != null) && (icg != null))
+                for (int i = 0; i < ic.Count; i++)
+                {
+                    TreeViewItem tvi = icg.ContainerFromIndex(i) as TreeViewItem;
+                    if (tvi != null)
+                    {
+                        ClearTreeViewItemsControlSelection(tvi.Items, tvi.ItemContainerGenerator);
+                        tvi.IsSelected = false;
+                    }
+                }
         }
     }
 }

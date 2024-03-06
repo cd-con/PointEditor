@@ -1,37 +1,22 @@
-﻿using System.Windows.Media;
-using System.Windows.Shapes;
+﻿using PointEditor.Utility.TreeViewStorage;
 
 namespace PointEditor.Utility.Actions.Objects.Generic;
 
-public abstract class AddObject : IAction
+public class AddObject : IAction
 {
-    public string initialName;
-    public Shape? Figure;
+    public string s_Name;
     public void Do(object[] args)
     {
         // Args
-        // 0 - border color
-        // 1 - fill color
-        // 2 - border thickness
-        // 3 - name
-        initialName = (string)args[3];
-
-        Figure = CreateFigure((Color)args[0],
-                            (Color)args[1],
-                            (int)args[2],
-                            (string)args[3]);
-        MainWindow.MainCanvas.Children.Add(Figure);
+        // 0 - name
+        s_Name = (string)args[0];
     }
-
-    public abstract Shape CreateFigure(Color borderColor,
-                                       Color fillColor,
-                                       int borderThickness,
-                                       string name);
 
     public void Undo() {
-        MainWindow.MainCanvas.Children.Remove(Figure);
-        Figure = null;
+        MainWindow.Instance.Dispatcher.Invoke(() => {
+            MainWindow.Instance.TreeViewItem_Remove(s_Name);
+        });
     }
 
-    public override string ToString() => $"Создание {initialName}";
+    public override string ToString() => $"Создание {s_Name}";
 }

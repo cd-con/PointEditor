@@ -9,13 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Layouts\EditorLayout.xaml.cs" />
-    <Compile Remove="Layouts\ToolsWindow.xaml.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Page Remove="Layouts\EditorLayout.xaml" />
-    <Page Remove="Layouts\ToolsWindow.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,10 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Layouts\EditorLayout.xaml" />
-    <None Include="Layouts\EditorLayout.xaml.cs" />
-    <None Include="Layouts\ToolsWindow.xaml" />
-    <None Include="Layouts\ToolsWindow.xaml.cs" />
+    <Resource Include="Layouts\EditorLayout.xaml" />
   </ItemGroup>
 
   <ItemGroup>

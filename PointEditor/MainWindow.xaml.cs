@@ -98,7 +98,7 @@ namespace PointEditor
             if (selected == null || selected is not TreeViewShape)
                 return;
 
-            Color newColor = e.NewValue.Safe();
+            // Color newColor = e.NewValue.Safe();
 
             // TODO Вынести в отдельную настройку
             /*if (PolygonList.SelectedItems == null || PolygonList.SelectedItems.Count == 0)

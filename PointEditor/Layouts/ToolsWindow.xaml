@@ -13,9 +13,16 @@
         <GroupBox Header="Карандаш" Height="69" VerticalAlignment="Top" Foreground="White">
             <Grid>
                 <xctk:ColorPicker x:Name="NewColorPicker" 
-                              SelectedColorChanged="NewColorPicker_ChangedColor" 
+                              SelectedColorChanged="ColorPicker_Change" 
                               Margin="10,10,10,0"
-                              SelectedColor="Gold" TabBackground="#FF05001E" TabForeground="White" Background="#FF05001E" BorderBrush="#FF2E53BF" DropDownBackground="#FF05001E" DropDownBorderBrush="#FF2E53BF" HeaderBackground="#FF05001E" HeaderForeground="White" Height="23" VerticalAlignment="Top"/>
+                              SelectedColor="Gold" 
+                              TabBackground="#FF05001E" 
+                              TabForeground="White"
+                              Background="#FF05001E"
+                              BorderBrush="#FF2E53BF" 
+                              DropDownBackground="#FF05001E" 
+                              DropDownBorderBrush="#FF2E53BF"
+                              HeaderBackground="#FF05001E" HeaderForeground="White" Height="23" VerticalAlignment="Top"/>
             </Grid>
         </GroupBox>
         <GroupBox Header="Элементы" 

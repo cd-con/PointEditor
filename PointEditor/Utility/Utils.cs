@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml;
@@ -156,8 +154,8 @@ public static class Utils
                       $"{poly.Name}.Stroke = new SolidColorBrush() " +
                        "{ Color = Color.FromRgb(" + brush.Color.R +
                        ", " + brush.Color.G +
-                       ", " + brush.Color.B + ")};" +
-                      $"{poly.Name}.StrokeThickness = {poly.StrokeThickness}" +
+                       ", " + brush.Color.B + ")};\n" +
+                      $"{poly.Name}.StrokeThickness = {poly.StrokeThickness};" +
                        "\n\n";
 
             foreach (Point point in poly.Points)
@@ -257,4 +255,20 @@ public static class Utils
         }
         return null;
     }
+
+    /// <summary>
+    /// Конвертирование Color? в Color. Если Color? == null, то возвращается Colors.White
+    /// </summary>
+    /// <param name="color"></param>
+    /// <returns></returns>
+    public static Color Safe(this Color? color) => color ?? Colors.White;
+
+    /// <summary>
+    /// Конвертация Color в SolidColorBrush
+    /// </summary>
+    /// <param name="color"></param>
+    /// <returns></returns>
+    public static SolidColorBrush ToBrush(this Color color) => new(color);
+
+    public static SolidColorBrush ToBrush(this System.Drawing.Color color) => new() { Color = Color.FromArgb(color.A, color.R, color.G, color.B) };
 }

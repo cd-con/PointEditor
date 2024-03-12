@@ -7,13 +7,17 @@
         mc:Ignorable="d"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         WindowStyle="ToolWindow"
-        Title="Инструменты" Height="450" 
+        WindowStartupLocation="Manual"
+        Left="1600"
+        Top="550"
+        Title="Инструменты" 
+        Height="450" 
         Width="300" Closing="Window_Closing">
     <Grid Background="#FF05001E">
         <GroupBox Header="Карандаш" Height="69" VerticalAlignment="Top" Foreground="White">
             <Grid>
                 <xctk:ColorPicker x:Name="NewColorPicker" 
-                              SelectedColorChanged="ColorPicker_Change" 
+                              SelectedColorChanged="CP_Change_Invoker" 
                               Margin="10,10,10,0"
                               SelectedColor="Gold" 
                               TabBackground="#FF05001E" 
@@ -36,7 +40,7 @@
                     <RowDefinition Height="153*"/>
                 </Grid.RowDefinitions>
                 <Button Content="Получить точки" HorizontalAlignment="Center" Margin="0,147,0,0" VerticalAlignment="Top" Click="GetCode_Click" Width="246" Background="#01DDDDDD" Foreground="White" Height="19" Grid.Row="1"/>
-                <!-- Оставлен временно, чтобы код не сыпал ошибками -->
+
                 <TreeView x:Name="SceneTreeView" 
                       Margin="0,4,0,0" 
                       Height="134" 

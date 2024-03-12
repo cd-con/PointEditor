@@ -20,7 +20,8 @@ namespace PointEditor.Layouts;
 /// </summary>
 public partial class ToolsWindow : Window
 {
-    private Scene? S_ctx;
+    public static ToolsWindow? Instance { get; private set; }
+    private EditorLayout? S_ctx;
 
     // Events for plugins?
     public delegate void ColorChangeEvent(Color color);
@@ -35,10 +36,14 @@ public partial class ToolsWindow : Window
     public delegate void ContextOpenEvent(TreeViewGeneric? item);
     public ContextOpenEvent? OnContextOpen;
 
-    public ToolsWindow() => InitializeComponent();
+    public ToolsWindow()
+    {
+        InitializeComponent();
+        Instance = this;
+    }
     
 
-    public void LoadContext(Scene ctx)
+    public void LoadContext(EditorLayout ctx)
     {
         if (S_ctx != null)
             throw new InvalidOperationException("Контекст был уже задан ранее");
@@ -54,15 +59,9 @@ public partial class ToolsWindow : Window
         UpdateTreeView();
     }
 
-    private void ActionsUpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e)
-    {
-        UpdateActionsList();
-    }
+    private void ActionsUpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e) => UpdateActionsList();
 
-    private void TreeViewUpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e)
-    {
-        UpdateTreeView();
-    }
+    private void TreeViewUpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e) => UpdateTreeView();
 
 
     public void UnloadContext()
@@ -82,10 +81,9 @@ public partial class ToolsWindow : Window
         ClearContextActions();
     }
 
-    public void ReloadContext(Scene ctx)
+    public void ReloadContext(EditorLayout ctx)
     {
         UnloadContext();
-
         LoadContext(ctx);
     }
 
@@ -109,9 +107,10 @@ public partial class ToolsWindow : Window
         return S_ctx != null;
     }
 
-    private void ColorPicker_Change(object sender, RoutedPropertyChangedEventArgs<Color?> e)
+    private void CP_Change_Invoker(object sender, RoutedPropertyChangedEventArgs<Color?> e)
     {
-        if (SceneTreeView != null) OnColorChange?.Invoke(NewColorPicker.SelectedColor.Safe());
+        if (SceneTreeView != null) 
+            OnColorChange?.Invoke(NewColorPicker.SelectedColor.Safe());
     }
 
     /// <summary>
@@ -172,10 +171,10 @@ public partial class ToolsWindow : Window
         }
     }
 
-    internal void AddShapeToDraw(Shape shape, TreeViewGeneric customParent = null)
+    internal void AddShapeToDraw(Shape shape)
     {
         S_ctx.GetCanvas().Children.Add(shape);
-        AddToTreeView<TreeViewShape>(shape.Name, new object[] { shape }, customParent);
+        AddToTreeView<TreeViewShape>(shape.Name, new object[] { shape });
     }
 
     /// <summary>
@@ -184,13 +183,13 @@ public partial class ToolsWindow : Window
     /// <typeparam name="T">Тип, наследуемый от TreeViewGeneric</typeparam>
     /// <param name="name"></param>
     /// <param name="args"></param>
-    internal void AddToTreeView<T>(string name, object[]? args = null, TreeViewGeneric? customParent = null) where T : TreeViewGeneric
+    internal void AddToTreeView<T>(string name, object[]? args = null) where T : TreeViewGeneric
     {
         name = string.IsNullOrEmpty(name) ? "Новый элемент" : name;
         int occurences = 0;
 
         TreeViewGeneric? parent = FindSelected();
-        parent ??= customParent;
+        parent ??= S_ctx.T_treeRoot;
 
         if (parent != null)
         {
@@ -211,9 +210,6 @@ public partial class ToolsWindow : Window
             }
         }
     }
-
-
-
 
     private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
 
@@ -370,7 +366,7 @@ public partial class ToolsWindow : Window
 
     private void ClearSelection(object sender, MouseButtonEventArgs e)
     {
-        //if (SceneTreeView.SelectedItem != null) ClearTreeViewItemsControlSelection(SceneTreeView.Items, SceneTreeView.ItemContainerGenerator);
+        if (SceneTreeView.SelectedItem != null) ClearTreeViewItemsControlSelection(SceneTreeView.Items, SceneTreeView.ItemContainerGenerator);
     }
 
     // Мне не нравится
@@ -556,9 +552,9 @@ public partial class ToolsWindow : Window
 
     private void FixRollback_Click(object sender, RoutedEventArgs e)
     {
-        /*l_Actions.Clear();
+        S_ctx.l_Actions.Clear();
         UpdateActionsList();
-        UpdateTreeView();*/
+        UpdateTreeView();
     }
 
     private void SceneTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) => OnSelectionChange?.Invoke(FindSelected());

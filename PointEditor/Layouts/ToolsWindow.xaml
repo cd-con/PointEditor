@@ -8,7 +8,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         WindowStyle="ToolWindow"
         Title="Инструменты" Height="450" 
-        Width="300">
+        Width="300" Closing="Window_Closing">
     <Grid Background="#FF05001E">
         <GroupBox Header="Карандаш" Height="69" VerticalAlignment="Top" Foreground="White">
             <Grid>
@@ -28,7 +28,8 @@
         <GroupBox Header="Элементы" 
               Height="205" 
               VerticalAlignment="Top" 
-              Margin="0,75,0,0">
+              Margin="0,75,0,0"
+              Foreground="White">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="5*"/>
@@ -46,6 +47,7 @@
                       PreviewMouseDoubleClick="SceneTreeView_Rename"
                       PreviewMouseRightButtonUp="MenuContentHandler" 
                       PreviewMouseLeftButtonDown="ClearSelection"
+                      SelectedItemChanged="SceneTreeView_SelectedItemChanged"
                       HorizontalAlignment="Center" 
                       Width="246">
                     <TreeView.ContextMenu>
@@ -69,7 +71,8 @@
             </Grid>
         </GroupBox>
         <GroupBox Header="Действия" 
-              Margin="0,285,0,0">
+              Margin="0,285,0,0"
+              Foreground="White">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>

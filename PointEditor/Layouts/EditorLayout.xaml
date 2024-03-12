@@ -7,7 +7,7 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="Editor">
     <Grid Background="#FF05001E">
-        <Canvas x:Name="mainCanvas" 
+        <Canvas x:Name="layoutCanvas" 
             MouseDown="MainCanvas_MouseDown"
             MouseUp="MainCanvas_MouseUp" 
             MouseMove="MainCanvas_MouseMove"

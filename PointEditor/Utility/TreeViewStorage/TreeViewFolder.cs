@@ -1,13 +1,16 @@
-﻿using System.Windows.Controls;
+﻿using System.Collections.Specialized;
+using System.Windows.Controls;
 
 namespace PointEditor.Utility.TreeViewStorage;
 
-internal class TreeViewFolder : TreeViewGeneric
+public class TreeViewFolder : TreeViewGeneric
 {
     public TreeViewFolder(string folderName)
     {
         ViewIcon = VIEWTYPE.Folder;
         s_Name = folderName;
+
+        l_Child.CollectionChanged += (object? sender, NotifyCollectionChangedEventArgs? e) => { Parent?.l_Child.Move(0, 0); };
     }
 
     public override TreeViewItem Get()

@@ -9,15 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Page Remove="Layouts\EditorLayout.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="Resources\Icons\icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Layouts\EditorLayout.xaml" />
   </ItemGroup>
 
   <ItemGroup>

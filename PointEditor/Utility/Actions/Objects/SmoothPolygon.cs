@@ -11,12 +11,14 @@ internal class SmoothPolygon : IAction
 {
     PointCollection initial;
     Polygon smoothered;
+    string initialName;
     public void Do(object[] args)
     {
         // Args
         // 0 - factor
         // 1 - points
         smoothered = (Polygon)args[1];
+        initialName = smoothered.Name.ToString();
         initial = smoothered.Points.Clone();
         // Проверяем, совпадает ли последняя точка с начальной
         if (smoothered.Points.Last() != smoothered.Points.First())
@@ -27,6 +29,6 @@ internal class SmoothPolygon : IAction
 
     public void Undo() => smoothered.Points = initial;
 
-    public override string ToString() => "Смягчение фигуры";
+    public override string ToString() => $"Смягчение фигуры {initialName}";
 
 }

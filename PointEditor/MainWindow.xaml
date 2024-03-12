@@ -6,122 +6,61 @@
         xmlns:local="clr-namespace:PointEditor"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="Point editor" Height="600" Width="800">
+        Loaded="Window_Loaded"
+        Title="PointEditor" Height="600" Width="800">
     <Grid Background="#FF05001E">
         <Grid.RowDefinitions>
-            <RowDefinition Height="0"/>
+            <RowDefinition Height="17"/>
             <RowDefinition Height="561*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="350*"/>
-            <ColumnDefinition Width="300"/>
         </Grid.ColumnDefinitions>
-        <!--<Menu Grid.ColumnSpan="2">
+        <Menu>
             <MenuItem Header="Сцена">
-                <MenuItem Header="Новая сцена"/>
+                <MenuItem Header="Новая сцена"
+                          Click="newScene_Click"/>
                 <Separator/>
-                <MenuItem Header="Открыть"/>
-                <MenuItem Header="Сохранить"/>
+                <MenuItem Header="Открыть"
+                          Click="Open_Click"/>
+                <MenuItem Header="Сохранить"
+                          Click="Save_Click"/>
                 <MenuItem Header="Сохранить как"/>
             </MenuItem>
-        </Menu>-->
-        <Canvas x:Name="mainCanvas" 
-                MouseDown="MainCanvas_MouseDown"
-                MouseUp="MainCanvas_MouseUp" 
-                MouseMove="MainCanvas_MouseMove"
-                Background="#82FFFFFF" 
-                Margin="10,10,10,10"
-                ClipToBounds="True" Grid.Row="1"/>
-        <GroupBox Header="Параметры"
-                  Foreground="White" 
-                  Grid.Column="1" 
-                  Margin="0,0,10,10" Grid.Row="1">
-            <Grid>
-                <GroupBox Header="Карандаш" Height="69" VerticalAlignment="Top" Foreground="White">
-                    <Grid>
-                        <xctk:ColorPicker x:Name="NewColorPicker" 
-                                          SelectedColorChanged="NewColorPicker_ChangedColor" 
-                                          Margin="10,10,10,0"
-                                          SelectedColor="Gold" TabBackground="#FF05001E" TabForeground="White" Background="#FF05001E" BorderBrush="#FF2E53BF" DropDownBackground="#FF05001E" DropDownBorderBrush="#FF2E53BF" HeaderBackground="#FF05001E" HeaderForeground="White" Height="23" VerticalAlignment="Top"/>
-                    </Grid>
-                </GroupBox>
-                <GroupBox Header="Элементы" 
-                          Height="205" 
-                          VerticalAlignment="Top" 
-                          Margin="0,75,0,0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="5*"/>
-                            <RowDefinition Height="153*"/>
-                        </Grid.RowDefinitions>
-                        <Button Content="Получить точки" HorizontalAlignment="Center" Margin="0,147,0,0" VerticalAlignment="Top" Click="GetCode_Click" Width="246" Background="#01DDDDDD" Foreground="White" Height="19" Grid.Row="1"/>
-                        <!-- Оставлен временно, чтобы код не сыпал ошибками -->
-                        <TreeView x:Name="SceneTreeView" 
-                                  Margin="0,4,0,0" 
-                                  Height="134" 
-                                  VerticalAlignment="Top" 
-                                  Background="Transparent" 
-                                  Foreground="White" 
-                                  Grid.Row="1"
-                                  PreviewMouseDoubleClick="SceneTreeView_Rename"
-                                  PreviewMouseRightButtonUp="MenuContentHandler" 
-                                  PreviewMouseLeftButtonDown="ClearSelection"
-                                  HorizontalAlignment="Center" 
-                                  Width="246">
-                            <TreeView.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem x:Name="AddToTreeRoot"
-                                        Header="Добавить...">
-                                        <MenuItem Header="Группу" 
-                                                  Click="TreeView_AddFolder"/>
-                                        <MenuItem Header="Фигуру">
-                                            <MenuItem Header="Полигон" Click="TreeView_AddPoly"/>
-                                        </MenuItem>
-                                    </MenuItem>
-                                    <Separator/>
-                                    <MenuItem Header="Удалить элемент" Click="TreeView_DeleteItem"/>
-                                    <Separator/>
-                                    <MenuItem x:Name="ItemActionsRoot" 
-                                              Header="Дополнительные действия"/>
-                                </ContextMenu>
-                            </TreeView.ContextMenu>
-                        </TreeView>
-                    </Grid>
-                </GroupBox>
-                <GroupBox Header="Действия" 
-                          Margin="0,285,0,0">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition Height="35"/>
-                        </Grid.RowDefinitions>
-                        <ListBox x:Name="ActionsList" Margin="0,5,0,0" Grid.ColumnSpan="2" Background="Transparent" Foreground="White"/>
-                        <Button x:Name="Revert"
-                                Content="Откатить" 
-                                HorizontalAlignment="Left" 
-                                Margin="10,0,0,0"
-                                Width="96" Height="20" 
-                                VerticalAlignment="Center" 
-                                Click="Revert_Click" 
-                                Grid.Row="1"
-                                Background="#00DDDDDD" Foreground="White"/>
-                        <Button Content="Закрепить" 
-                                HorizontalAlignment="Left" 
-                                Margin="27,0,0,0" 
-                                Width="96"
-                                Height="20" 
-                                VerticalAlignment="Center" 
-                                Click="FixRollback_Click" 
-                                Grid.Row="1" 
-                                Grid.Column="1"
-                                Background="#00DDDDDD" Foreground="White"/>
-                    </Grid>
-                </GroupBox>
-            </Grid>
-        </GroupBox>
+            <MenuItem Header="Вид">
+                <MenuItem Header="Окно инструментов"
+                          Click="OpenTools_Click"/>
+            </MenuItem>
+        </Menu>
+        <TabControl x:Name="SceneContainer" Grid.Row="1" Background="#3FFFFFFF" SelectionChanged="SceneContainer_SelectionChanged">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Content="{Binding}" />
+                                    <Button Margin="5 0 0 0" Width="16" Height="16" Grid.Column="1" Click="HeaderClose_Click"
+                                            VerticalContentAlignment="Top" HorizontalContentAlignment="Center">
+                                        <Button.Content>
+                                            <TextBlock FontWeight="Bold" 
+                                                       VerticalAlignment="Stretch" 
+                                                       HorizontalAlignment="Stretch" 
+                                                       Margin="-1 -3.5 0 0"
+                                                       Text="x"/>
+                                        </Button.Content>
+                                    </Button>
+
+                                </Grid>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+        </TabControl>
+
     </Grid>
 </Window>

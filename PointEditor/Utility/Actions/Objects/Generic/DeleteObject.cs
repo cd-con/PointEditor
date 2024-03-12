@@ -14,15 +14,15 @@ internal class DeleteObject : IAction
         itemType = args[0].GetType();
         t_Item = (TreeViewGeneric)args[0];
 
-        MainWindow.Instance.TreeViewItem_Remove(t_Item);
+        MainWindow.ToolsInstance.TreeViewItem_Remove(t_Item);
     }
 
     public void Undo()
     {
-        if (itemType == typeof(TreeViewFolder))
-            MainWindow.Instance.AddToTreeView<TreeViewFolder>(t_Item.s_Name);
+       if (itemType == typeof(TreeViewFolder))
+            MainWindow.ToolsInstance.AddToTreeView<TreeViewFolder>(t_Item.s_Name);
         else if(itemType == typeof(TreeViewShape))
-            MainWindow.Instance.AddToTreeView<TreeViewShape>(t_Item.s_Name, new object[] { ((TreeViewShape)t_Item).GetStoredValue() });
+            MainWindow.ToolsInstance.AddToTreeView<TreeViewShape>(t_Item.s_Name, new object[] { ((TreeViewShape)t_Item).GetStoredValue() });
 
 
     }

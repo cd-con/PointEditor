@@ -14,7 +14,7 @@ public class AddObject : IAction
 
     public void Undo() {
         MainWindow.Instance.Dispatcher.Invoke(() => {
-            MainWindow.Instance.TreeViewItem_Remove(s_Name);
+            MainWindow.ToolsInstance.TreeViewItem_Remove(s_Name);
         });
     }
 

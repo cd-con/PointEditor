@@ -1,4 +1,6 @@
-﻿using PointEditor.Utility;
+﻿using Microsoft.Win32;
+using PointEditor.Layouts;
+using PointEditor.Utility;
 using PointEditor.Utility.Actions;
 using PointEditor.Utility.Actions.Objects;
 using PointEditor.Utility.Actions.Objects.Generic;
@@ -6,7 +8,9 @@ using PointEditor.Utility.TreeViewStorage;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Windows;
@@ -14,6 +18,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Xceed.Wpf.Toolkit;
 
 namespace PointEditor
 {
@@ -23,29 +28,20 @@ namespace PointEditor
 
     public partial class MainWindow : Window
     {
-        private List<IAction> l_Actions = new();
-        private List<TreeViewGeneric> l_TreeItems = new();
-
         private const int APP_VERSION = 20;
-
-
-        bool bypassNoPointsWarning = false;
-        bool bypassIncorrectMoveInputWarning = false;
-        bool bypassNamingWarning = false;
-        bool bypassInvalidNumber = false;
 
         public static Canvas MainCanvas { get; private set; }
         public static MainWindow Instance { get; private set; }
+
+        public static ToolsWindow ToolsInstance { get; private set; } = new();
+
+        private List<Scene> openScenes = new();
 
         public MainWindow()
         {
             InitializeComponent();
             CheckUpdates();
-            MainCanvas = mainCanvas;
             Instance = this;
-
-            l_TreeItems.Add(new TreeViewFolder("Сцена"));
-            UpdateTreeView();
         }
 
         public async void CheckUpdates()
@@ -61,7 +57,7 @@ namespace PointEditor
                     s_version = s_version.TrimEnd();
                     if (int.TryParse(s_version, out int version) && version > APP_VERSION)
                     {
-                        if (MessageBox.Show("Вышла новая версия приложения!\nОбновить сейчас?", "Обновление", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        if (System.Windows.MessageBox.Show("Вышла новая версия приложения!\nОбновить сейчас?", "Обновление", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                         {
                             Process.Start("Updater.exe");
                             Application.Current.Shutdown();
@@ -70,513 +66,149 @@ namespace PointEditor
                 }
                 catch (HttpRequestException ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    System.Windows.MessageBox.Show(ex.Message);
                     // Kwuh
                 }
             }
         }
 
-        public void UpdateTreeView()
+        private void newScene_Click(object sender, RoutedEventArgs e)
         {
-            SceneTreeView.Items.Clear();
+            Scene newScene = new();
+            openScenes.Add(newScene);
 
-            // Этот код нужен на будущее
-            // Когда я сделаю импорт нескольких сцен
-            foreach (TreeViewGeneric item in l_TreeItems)
-                SceneTreeView.Items.Add(item.Get());
-        }
-
-        public void UpdateActionsList() => ActionsList.ItemsSource = l_Actions.Select(x => $"{l_Actions.IndexOf(x) + 1}. " + x.ToString());
-
-        private void NewColorPicker_ChangedColor(object sender, RoutedPropertyChangedEventArgs<Color?> e)
-        {
-            if (SceneTreeView == null)
-                return;
-
-            TreeViewGeneric? selected = FindSelected();
-
-            if (selected == null || selected is not TreeViewShape)
-                return;
-
-            // Color newColor = e.NewValue.Safe();
-
-            // TODO Вынести в отдельную настройку
-            /*if (PolygonList.SelectedItems == null || PolygonList.SelectedItems.Count == 0)
+            TabItem m = new()
             {
-                //foreach (var polygon in polygons)
-                //    polygon.Stroke = Preview.Fill;
-            }
-            else
-            {
-               foreach (string polyName in PolygonList.SelectedItems)*/
-            (selected.GetStoredValue() as Polygon).Stroke = NewColorPicker.SelectedColor.Safe().ToBrush();
-            //}
-        }
-
-        private Shape selectedShape;
-        private void MainCanvas_MouseUp(object sender, MouseButtonEventArgs e) => selectedShape = null;
-        private void MainCanvas_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed && selectedShape != null)
-            {
-                if (selectedShape.GetType() == typeof(Polygon))
-                    ((Polygon)selectedShape).Points[((Polygon)selectedShape).Points.Count - 1] = e.GetPosition(MainCanvas);
-                else
-                    MessageBox.Show("Неподдерживаемый тип фигуры", "Ошибка!");
-            }
-        }
-
-        private void MainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            TreeViewGeneric? selected = FindSelected();
-
-            if (selected == null || selected.GetType() != typeof(TreeViewShape))
-                return;
-
-            selectedShape = ((TreeViewShape)selected).GetStoredValue();
-            if (selectedShape.GetType() == typeof(Polygon))
-            {
-                AddPoint newAction = new AddPoint();
-                newAction.Do(new object[] { ((Polygon)selectedShape).Points, e.GetPosition(mainCanvas) });
-                l_Actions.Add((newAction));
-                UpdateActionsList();
-            }
-            else
-                MessageBox.Show("Неподдерживаемый тип фигуры", "Ошибка!");
-        }
-
-        private void GetCode_Click(object sender, RoutedEventArgs e)
-        {
-            if (!MainCanvas.Children.OfType<Shape>().Any())
-            {
-                MessageBox.Show("Для генерации кода на сцене необходим минимум один полигон", "Отмена");
-                return;
-            }
-
-            string result = string.Empty;
-
-            foreach (Polygon poly in MainCanvas.Children.OfType<Shape>().Cast<Polygon>())
-                result += poly.GetCode();
-
-            Cursor = Cursors.Wait; // Дадим подумать...
-
-            try
-            {
-                Clipboard.SetText(result);
-                MessageBox.Show("Код успешно скопирован в буфер обмена", "Код скопирован");
-            }
-            catch (System.Runtime.InteropServices.COMException)
-            {
-                MessageBoxDialog copypasteDialog = new("Произошла ошибка",
-                                                       "Невозможно скопировать код в буфер обмена.\nКод предоставлен ниже.");
-                copypasteDialog.ResponseTextBox.Text = result;
-
-
-                copypasteDialog.ShowDialog();
-            }
-            finally
-            {
-                Cursor = null; // Не забываем сбросить курсор
-            }
-        }
-
-        private void Resize_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBoxDialog resizeDialog = new("Изменить размер", "Фактор изменения размера");
-            if (resizeDialog.ShowDialog() == true &&
-                double.TryParse(resizeDialog.ResponseText, NumberStyles.Float, CultureInfo.InvariantCulture, out double factor) &&
-                factor != 0)
-            {
-                TreeViewGeneric? selected = FindSelected();
-
-                if (selected is TreeViewShape) { 
-                    Polygon? shape = selected.GetStoredValue() as Polygon;
-                    IAction newResizeAction = new ResizePolyGeneric();
-                    newResizeAction.Do(new object[] { factor, shape.Points });
-                    l_Actions.Add(newResizeAction);
-                }
-                UpdateActionsList();
-            }
-        }
-
-        private void Smooth_Click(object sender, RoutedEventArgs e)
-        {
-            // Oh boy, here we go
-            MessageBoxDialog smootherDialog = new("Смягчить", "Введите значение");
-
-            if (smootherDialog.ShowDialog() == true &&
-                !string.IsNullOrEmpty(smootherDialog.ResponseText))
-            {
-                TreeViewGeneric? selected = FindSelected();
-
-                if (int.TryParse(smootherDialog.ResponseText, out int smooth_factor) &&
-                    smooth_factor > 0 && selected != null)
+                Header = "Новая сцена",
+                Tag = openScenes.IndexOf(newScene),
+                Content = new Frame()
                 {
+                    Content = newScene.GetLayout()// Я хз почему так
+                }
+            };
 
-                    if (selected.GetType() == typeof(TreeViewShape))
+            SceneContainer.Items.Add(m);
+            SceneContainer.SelectedIndex = SceneContainer.Items.Count - 1;
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            ToolsInstance.Owner = this;
+            ToolsInstance.Show();
+        }
+
+        private void SceneContainer_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SceneContainer.SelectedItem != null)
+                ToolsInstance.ReloadContext(openScenes[(int)(SceneContainer.SelectedItem as TabItem).Tag]);
+            else
+                ToolsInstance.UnloadContext();
+        }
+
+        private void OpenTools_Click(object sender, RoutedEventArgs e)
+        {
+            ToolsInstance.Show();
+        }
+
+        private void HeaderClose_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button)
+            {
+                TabItem tabItem = FindParent<TabItem>((Button)sender);
+                if (tabItem != null)
+                {
+                    if (GetOpenScene().isModified)
                     {
-                        selected = selected as TreeViewShape;
-                        Shape? selectedFigure = selected?.GetStoredValue() as Shape;
-                        // Проверяем, есть ли в фигуре точки
+                        MessageBoxResult result = System.Windows.MessageBox.Show("Сцена была изменена!\n\nСохранить изменения?", "Вы уверены?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
 
-
-                        if (selectedFigure is Polygon { Points.Count: > 0 })
+                        switch (result)
                         {
-                            IAction newAction = new SmoothPolygon();
-
-                            newAction.Do(new object[] { smooth_factor, selectedFigure });
-
-                            l_Actions.Add(newAction);
+                            case MessageBoxResult.Yes:
+                                Export();
+                                break;
+                            case MessageBoxResult.No:
+                                break;
+                            default:
+                                return;
                         }
-                        else
-                        {
-                            if (!bypassNoPointsWarning)
-                            {
-                                Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Попытка сглаживания фигуры {selectedFigure.Name} не удалась. Количество точек в фигуре должно быть больше 0");
-                                if (exDialog.ShowDialog() == true && exDialog.isCancelled) { }
-                                bypassNoPointsWarning = exDialog.BypassDialog;
-                            }
-                        }
-                        UpdateActionsList();
                     }
-                }
-            }
-            else
-            {
-                if (!bypassInvalidNumber)
-                {
-                    Utility.Dialogs.ExceptionDialog exDialog = new(message: $"Значение `{smootherDialog.ResponseText}` не является валидным для этой операции.");
-                    exDialog.ShowDialog();
-                    bypassInvalidNumber = exDialog.BypassDialog;
+                    openScenes.Remove(GetOpenScene());
+                    SceneContainer.Items.Remove(tabItem);
+
+
                 }
             }
         }
 
-        private void Move_Click(object sender, RoutedEventArgs e)
+        private T FindParent<T>(DependencyObject obj) where T : DependencyObject
         {
-            MessageBoxDialog moveDialog = new("Сместить", "Пример ввода - горизонталь;вертикаль");
-            if (moveDialog.ShowDialog() == true)
+            DependencyObject parent = VisualTreeHelper.GetParent(obj);
+            if (parent == null) return null;
+            T parentT = parent as T;
+            return parentT ?? FindParent<T>(parent);
+        }
+
+        private void Save_Click(object sender, RoutedEventArgs e)
+        {
+            if (SceneContainer.SelectedItem != null)
+                Export();
+        }
+
+        private Scene GetOpenScene() => openScenes[(int)(SceneContainer.SelectedItem as TabItem).Tag];
+
+        private void Export(bool bypassPathCheck = false)
+        {
+            if (!bypassPathCheck && GetOpenScene().GetPath() != null)
             {
-                string[] coords = moveDialog.ResponseText.Split(';');
-                if (coords.Length == 2 &&
-                    int.TryParse(coords[0], out int x) &&
-                    int.TryParse(coords[1], out int y))
-                {
-                    TreeViewGeneric? selected = FindSelected();
-                    if (selected is TreeViewShape) {
-                        IAction newAction = new MovePolyGeneric();
-
-                        newAction.Do(new object[] { new Point(x, y), (selected.GetStoredValue() as Polygon).Points});
-
-                        l_Actions.Add(newAction);
-                    }
-                    UpdateActionsList();
-                }
-                else if (moveDialog.ResponseText.Length > 0 && !bypassIncorrectMoveInputWarning)
-                {
-                    Utility.Dialogs.ExceptionDialog exDialog = new("Ошибка смещения", $"Неверный ввод.\nИспользуйте маску:\n(-)горизонталь;(-)вертикаль");
-                    exDialog.ShowDialog();
-                    bypassIncorrectMoveInputWarning = exDialog.BypassDialog;
-                }
-            }
-        }
-
-        private void Revert_Click(object sender, RoutedEventArgs e)
-        {
-            if (ActionsList.SelectedItem != null)
-            {
-                int revertPoint = ActionsList.Items.IndexOf(ActionsList.SelectedItem);
-                while (revertPoint != l_Actions.Count)
-                {
-                    IAction revertAction = l_Actions.Last();
-                    revertAction.Undo();
-                    l_Actions.Remove(revertAction);
-                }
-            }
-            UpdateActionsList();
-            UpdateTreeView();
-        }
-
-        private void FixRollback_Click(object sender, RoutedEventArgs e)
-        {
-            l_Actions.Clear();
-            UpdateActionsList();
-            UpdateTreeView();
-        }
-
-        /// <summary>
-        /// TODO
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void TreeView_AddFolder(object sender, RoutedEventArgs e)
-        {
-            MessageBoxDialog addFolderDialog = new("Новая группа", "Введите название новой группы");
-
-            if (addFolderDialog.ShowDialog() == true)
-            {
-                AddObject newAction = new AddObject();
-                newAction.Do(new object[] { addFolderDialog.ResponseText });
-                l_Actions.Add(newAction);
-
-                AddToTreeView<TreeViewFolder>(addFolderDialog.ResponseText);
-
-                UpdateActionsList();
-            }
-        }
-
-        /// <summary>
-        /// TODO
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void TreeView_AddPoly(object sender, RoutedEventArgs e)
-        {
-            MessageBoxDialog addShape = new("Новая фигура", "Введите название новой фигуры");
-            if (addShape.ShowDialog() == true)
-            {
-                AddObject newAction = new AddObject();
-                string result = addShape.ResponseText.Replace(' ', '_').Replace('.', '_');
-                result = string.IsNullOrEmpty(result) ? $"newPolygon{MainCanvas.Children.OfType<Shape>().Count()}" : result;
-
-                if (char.IsDigit(result[0]))
-                    result = result.Replace(result[0], '_');
-
-                newAction.Do(new object[] { result });
-                
-                Polygon newPolygon = new()
-                {
-                    Stroke = NewColorPicker.SelectedColor.Safe().ToBrush(),
-                    StrokeThickness = 3,
-                    Name = result
-                };
-
-                mainCanvas.Children.Add(newPolygon);
-
-                l_Actions.Add(newAction);
-
-                AddToTreeView<TreeViewShape>(newAction.s_Name, new object[] { newPolygon });
-
-                UpdateActionsList();
-            }
-        }
-
-        /// <summary>
-        /// Универсальный метод добавление TreeView элементов в TreeView
-        /// </summary>
-        /// <typeparam name="T">Тип, наследуемый от TreeViewGeneric</typeparam>
-        /// <param name="name"></param>
-        /// <param name="args"></param>
-        internal void AddToTreeView<T>(string name, object[]? args = null) where T : TreeViewGeneric
-        {
-            name = string.IsNullOrEmpty(name) ? "Новый элемент" : name;
-            int occurences = 0;
-
-            TreeViewGeneric? parent = FindSelected();
-
-            if (parent != null)
-            {
-                occurences = parent.l_Child.Where(x => x.s_Name == name).Count();
-                name += occurences > 0 ? occurences : "";
-
-                if (typeof(T) == typeof(TreeViewFolder))
-                {
-                    TreeViewFolder folder = new(name);
-                    folder.SetParent(parent);
-                    parent.l_Child.Add(folder);
-                }
-                else if (typeof(T) == typeof(TreeViewShape))
-                {
-                    TreeViewShape shape = new((Shape)args[0]);
-                    shape.SetParent(parent);
-                    parent.l_Child.Add(shape);
-                }
-
-                UpdateTreeView();
-            }
-        }
-
-
-        private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
-
-        private TreeViewGeneric? FindSelected()
-        {
-            string? searchName = (string?)((TreeViewItem)SceneTreeView.SelectedItem)?.Header;
-
-            if (string.IsNullOrEmpty(searchName)) return null;
-
-            TreeViewGeneric? selected = l_TreeItems.Where(x => x.s_Name == searchName).SingleOrDefault();
-
-            for (int i = 0; i < l_TreeItems.Count; i++)
-            {
-                selected ??= l_TreeItems[i].FindChild(searchName);
-
-                if (selected != null)
-                    return selected;
-            }
-
-            return null;
-        }
-
-        private void TreeViewRename()
-        {
-            TreeViewGeneric? selected = FindSelected();
-
-            if (selected == null)
+                ExportSVG(GetOpenScene(), GetOpenScene().GetPath());
                 return;
-
-            MessageBoxDialog renameDialog = new("Переименовать", $"{selected.s_Name} будет переименован в");
-
-            if (renameDialog.ShowDialog() == true &&
-                renameDialog.ResponseText.Length > 0)
-            {
-                string result = renameDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
-
-                if (result.Length > 16 &&
-                    !bypassNamingWarning)
-                {
-                    Utility.Dialogs.ExceptionDialog nameLengthWarnDialog = new("Предупреждение",
-                                                                  $"Рекомендуем укоротить название до 16 символов и меньше.");
-
-                    if (nameLengthWarnDialog.ShowDialog() == true &&
-                        nameLengthWarnDialog.isCancelled)
-                    {
-                        // TODO Убрать рекурсию
-                        TreeViewRename();
-                        return;
-                    }
-
-                    bypassNamingWarning = nameLengthWarnDialog.BypassDialog;
-                }
-
-                TreeViewGeneric? parent = selected.GetParent();
-                int occurences = 0;
-                if (parent != null)
-                {
-                    occurences = parent.l_Child.Where(x => x.s_Name == result).Count();
-                    result += occurences > 0 ? occurences : "";
-
-                    // Костыль
-                    if (selected.GetType() == typeof(TreeViewShape))
-                    {
-
-                        if (char.IsDigit(result[0]))
-                            result = result.Replace(result[0], '_');
-
-                        ((Shape)selected.GetStoredValue()).Name = result;
-                    }
-                }
-                else
-                {
-                    // Если у нас оказался корневой каталог
-                    occurences = l_TreeItems.Where(x => x.s_Name == result).Count();
-                    result += occurences > 0 ? occurences : "";
-                }
-                IAction newRenameAction = new RenameObject();
-
-                newRenameAction.Do(new object[] { selected, result });
-
-                l_Actions.Add(newRenameAction);
-                UpdateTreeView();
-                UpdateActionsList();
             }
-        }
 
-        private void TreeView_DeleteItem(object sender, RoutedEventArgs e)
-        {
-            TreeViewGeneric? selected = FindSelected();
-
-            TreeViewItem_Remove(selected);
-
-            DeleteObject newAction = new();
-
-            newAction.Do(new object[] { selected });
-
-            l_Actions.Add(newAction);
-
-            UpdateActionsList();
-            UpdateTreeView();
-        }
-
-        internal void TreeViewItem_Remove(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return;
-
-            TreeViewGeneric? selected = l_TreeItems.Where(x => x.s_Name == name).SingleOrDefault();
-
-            for (int i = 0; i < l_TreeItems.Count; i++)
+            SaveFileDialog saveFileDialog = new()
             {
-                selected ??= l_TreeItems[i].FindChild(name);
+                Filter = "SVG file (*.svg)|*.svg",
+                ValidateNames = true,
+                FileName = "myDrawing.svg"
+            };
 
-                TreeViewItem_Remove(selected);
-            }
+            if (saveFileDialog.ShowDialog() == true)
+                ExportSVG(GetOpenScene(), saveFileDialog.FileName);
         }
 
-        internal void TreeViewItem_Remove(TreeViewGeneric? item)
+        private void ExportSVG(Scene scene, string filename)
         {
-            if (item == null) return;
+            string acc = $"<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n" +
+             "<!-- Сгенерировано в PointEditor -->\r\n" +
+            $"<svg width=\"{scene.GetCanvas().RenderSize.Width}px\" height=\"{scene.GetCanvas().RenderSize.Height}px\" " +
+            $"viewBox=\"0 0 {scene.GetCanvas().RenderSize.Width} {scene.GetCanvas().RenderSize.Height}\" class=\"icon\"  version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">"; ;
 
-            if (item.GetType() == typeof(TreeViewShape))
-                MainCanvas.Children.Remove((Shape)item.GetStoredValue());
+            foreach (TreeViewShape shape in scene.T_treeRoot.FindChildrenOf<TreeViewShape>())
+                if (shape.GetStoredValue() is Polygon)
+                    acc += (shape.GetStoredValue() as Polygon).GetSVG();
 
-            item.GetParent()?.l_Child.Remove(item);
+            acc += "</svg>";
+
+            File.WriteAllText(filename, acc);
+
+            scene.isModified = false;
+
+            ((TabItem)SceneContainer.SelectedItem).Header = scene.SetPath(filename);
         }
 
-        private void ClearContextActions()
+        private void Open_Click(object sender, RoutedEventArgs e)
         {
-            ItemActionsRoot.Items.Clear();
-            ItemActionsRoot.Items.Add(new MenuItem() { Header = "Пусто", IsEnabled = false });
-        }
+            OpenFileDialog openFileDialog = new OpenFileDialog();
 
-        private void ShapeContextActions()
-        {
-            ItemActionsRoot.Items.Clear();
-
-            MenuItem scale = new() { Header = "Изменить размер" };
-            scale.Click += Resize_Click;
-
-            MenuItem move = new() { Header = "Сместить" };
-            move.Click += Move_Click;
-
-            MenuItem smooth = new() { Header = "Смягчить" };
-            smooth.Click += Smooth_Click;
-
-            ItemActionsRoot.Items.Add(move);
-            ItemActionsRoot.Items.Add(scale);
-            ItemActionsRoot.Items.Add(smooth);
-        }
-
-        private void MenuContentHandler(object sender, MouseButtonEventArgs e)
-        {
-            TreeViewGeneric? selected = FindSelected();
-
-            AddToTreeRoot.IsEnabled = selected != null;
-
-            if (selected is TreeViewShape)
-                ShapeContextActions();
-            else
-                ClearContextActions();
-        }
-
-        private void ClearSelection(object sender, MouseButtonEventArgs e)
-        {
-            if (SceneTreeView.SelectedItem != null)
-                ClearTreeViewItemsControlSelection(SceneTreeView.Items, SceneTreeView.ItemContainerGenerator);
-        }
-
-        // Мне не нравится
-        private static void ClearTreeViewItemsControlSelection(ItemCollection ic, ItemContainerGenerator icg)
-        {
-            if ((ic != null) && (icg != null))
-                for (int i = 0; i < ic.Count; i++)
-                {
-                    TreeViewItem tvi = icg.ContainerFromIndex(i) as TreeViewItem;
-                    if (tvi != null)
-                    {
-                        ClearTreeViewItemsControlSelection(tvi.Items, tvi.ItemContainerGenerator);
-                        tvi.IsSelected = false;
-                    }
+            if (openFileDialog.ShowDialog() == true)
+            {
+                if (SceneContainer.SelectedItem == null) {
+                    newScene_Click(null, null);
+                    ((TabItem)SceneContainer.SelectedItem).Header = System.IO.Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                 }
+
+                foreach (Shape shape in Utils.ParseSVG(openFileDialog.FileName))
+                    ToolsInstance.AddShapeToDraw(shape, GetOpenScene().T_treeRoot);
+            }
         }
     }
 }

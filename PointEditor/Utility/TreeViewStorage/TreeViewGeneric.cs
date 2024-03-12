@@ -1,13 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows.Controls;
+using System.Xml.Linq;
 
 namespace PointEditor.Utility.TreeViewStorage;
 public abstract class TreeViewGeneric
 {
-    private TreeViewGeneric? Parent;
-    public List<TreeViewGeneric> l_Child = new();
+    protected TreeViewGeneric? Parent;
+    public ObservableCollection<TreeViewGeneric> l_Child = new();
     public string s_Name = string.Empty;
-    internal enum VIEWTYPE
+    public enum VIEWTYPE
     {
         None = 0,
         Folder = 1,
@@ -45,6 +49,21 @@ public abstract class TreeViewGeneric
     }
 
     public void SetParent(TreeViewGeneric newParent) => Parent = newParent;
+
+    public List<TreeViewGeneric> FindChildrenOf<T>() => FindChildrenOf(typeof(T));
+    public List<TreeViewGeneric> FindChildrenOf(Type type)
+    {
+        List<TreeViewGeneric> result = new();
+
+        foreach (TreeViewGeneric item in l_Child)
+        {
+            if (item.GetType() == type)
+                result.Add(item);
+
+            result = result.Concat(item.FindChildrenOf(type)).ToList();
+        }
+        return result;
+    }
 
     public TreeViewGeneric? GetParent() => Parent;
 }

@@ -1,16 +1,24 @@
 ﻿using Microsoft.Win32;
 using PointEditor.Layouts;
 using PointEditor.Utility;
+using PointEditor.Utility.Actions;
+using PointEditor.Utility.Actions.Objects;
+using PointEditor.Utility.Actions.Objects.Generic;
 using PointEditor.Utility.TreeViewStorage;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Xceed.Wpf.Toolkit;
 
 namespace PointEditor
 {
@@ -27,7 +35,7 @@ namespace PointEditor
 
         public static ToolsWindow ToolsInstance { get; private set; } = new();
 
-        private List<EditorLayout> openScenes = new();
+        private List<Scene> openScenes = new();
 
         public MainWindow()
         {
@@ -67,7 +75,7 @@ namespace PointEditor
 
         private void newScene_Click(object sender, RoutedEventArgs e)
         {
-            EditorLayout newScene = new();
+            Scene newScene = new();
             openScenes.Add(newScene);
 
             TabItem m = new()
@@ -76,7 +84,7 @@ namespace PointEditor
                 Tag = openScenes.IndexOf(newScene),
                 Content = new Frame()
                 {
-                    Content = newScene// Я хз почему так
+                    Content = newScene.GetLayout()// Я хз почему так
                 }
             };
 
@@ -100,10 +108,7 @@ namespace PointEditor
 
         private void OpenTools_Click(object sender, RoutedEventArgs e)
         {
-            if (ToolsWindow.Instance.IsVisible)
-                ToolsWindow.Instance.Close();
-            else
-                ToolsWindow.Instance?.Show();
+            ToolsInstance.Show();
         }
 
         private void HeaderClose_Click(object sender, RoutedEventArgs e)
@@ -150,7 +155,7 @@ namespace PointEditor
                 Export();
         }
 
-        private EditorLayout GetOpenScene() => openScenes[(int)(SceneContainer.SelectedItem as TabItem).Tag];
+        private Scene GetOpenScene() => openScenes[(int)(SceneContainer.SelectedItem as TabItem).Tag];
 
         private void Export(bool bypassPathCheck = false)
         {
@@ -171,7 +176,7 @@ namespace PointEditor
                 ExportSVG(GetOpenScene(), saveFileDialog.FileName);
         }
 
-        private void ExportSVG(EditorLayout scene, string filename)
+        private void ExportSVG(Scene scene, string filename)
         {
             string acc = $"<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n" +
              "<!-- Сгенерировано в PointEditor -->\r\n" +
@@ -197,21 +202,10 @@ namespace PointEditor
 
             if (openFileDialog.ShowDialog() == true)
             {
-                EditorLayout newScene = new();
-                openScenes.Add(newScene);
-
-                TabItem m = new()
-                {
-                    Header = newScene.SetPath(openFileDialog.FileName),
-                    Tag = openScenes.IndexOf(newScene),
-                    Content = new Frame()
-                    {
-                        Content = newScene// Я хз почему так
-                    }
-                };
-
-                SceneContainer.Items.Add(m);
-                SceneContainer.SelectedIndex = SceneContainer.Items.Count - 1;
+                if (SceneContainer.SelectedItem == null) {
+                    newScene_Click(null, null);
+                    ((TabItem)SceneContainer.SelectedItem).Header = System.IO.Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                }
 
                 foreach (Shape shape in UtilsSVG.ParseSVG(openFileDialog.FileName))
                     ToolsInstance.AddShapeToDraw(shape, GetOpenScene().T_treeRoot);

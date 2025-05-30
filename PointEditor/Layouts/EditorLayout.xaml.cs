@@ -54,7 +54,11 @@ public partial class EditorLayout : Page
         c_Canvas = layoutCanvas;
         S_ctx = scene;
         MainWindow.ToolsInstance.OnSelectionChange += SelectionChangeEvent;
-        MainWindow.ToolsInstance.OnColorChange += (Color color) => { S_selected.Stroke = color.ToBrush(); };
+        MainWindow.ToolsInstance.OnColorChange += (Color color) => 
+        { 
+            if (S_selected != null)
+                S_selected.Stroke = color.ToBrush(); 
+        };
     }
 
     public void SelectionChangeEvent(TreeViewGeneric? item)

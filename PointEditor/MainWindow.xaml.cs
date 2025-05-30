@@ -46,6 +46,7 @@ namespace PointEditor
 
         public async void CheckUpdates()
         {
+
             using (HttpClient client = new()
             {
                 BaseAddress = new Uri("https://raw.githubusercontent.com/cd-con/PointEditor/master/currentVersion.txt")
@@ -206,7 +207,7 @@ namespace PointEditor
                     ((TabItem)SceneContainer.SelectedItem).Header = System.IO.Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                 }
 
-                foreach (Shape shape in Utils.ParseSVG(openFileDialog.FileName))
+                foreach (Shape shape in UtilsSVG.ParseSVG(openFileDialog.FileName))
                     ToolsInstance.AddShapeToDraw(shape, GetOpenScene().T_treeRoot);
             }
         }

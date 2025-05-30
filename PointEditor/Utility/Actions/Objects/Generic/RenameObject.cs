@@ -1,4 +1,5 @@
 ﻿using PointEditor.Utility.TreeViewStorage;
+using System.Windows.Shapes;
 
 namespace PointEditor.Utility.Actions.Objects.Generic;
 
@@ -16,13 +17,19 @@ internal class RenameObject : IAction
 
         t_Target = (TreeViewGeneric)args[0];
         s_old = t_Target.s_Name.ToString();
-        s_new = (string)args[1];
-        t_Target.s_Name = s_new;
+        t_Target.s_Name = s_new = (string)args[1];
     }
 
     public void Undo()
     {
         t_Target.s_Name = s_old;
+
+        // TODO quickfix
+        var a = t_Target.GetStoredValue();
+
+        if (a is Shape shape)
+            shape.Name = s_old;
+
         t_Target = null;
     }
 

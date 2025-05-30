@@ -45,22 +45,10 @@ public partial class ToolsWindow : Window
 
         S_ctx = ctx;
 
-        S_ctx.l_Actions.CollectionChanged += ActionsUpdateHandler;
+        S_ctx.l_Actions.CollectionChanged += UpdateHandler;
+        S_ctx.T_treeRoot.l_Child.CollectionChanged += UpdateHandler;
 
-        S_ctx.T_treeRoot.l_Child.CollectionChanged += TreeViewUpdateHandler;
-
-        // Костыль
         UpdateActionsList();
-        UpdateTreeView();
-    }
-
-    private void ActionsUpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e)
-    {
-        UpdateActionsList();
-    }
-
-    private void TreeViewUpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e)
-    {
         UpdateTreeView();
     }
 
@@ -70,8 +58,8 @@ public partial class ToolsWindow : Window
         if (S_ctx == null)
             return;
 
-        S_ctx.l_Actions.CollectionChanged -= ActionsUpdateHandler;
-        S_ctx.T_treeRoot.l_Child.CollectionChanged -= TreeViewUpdateHandler;
+        S_ctx.l_Actions.CollectionChanged -= UpdateHandler;
+        S_ctx.T_treeRoot.l_Child.CollectionChanged -= UpdateHandler;
 
         S_ctx = null;
 
@@ -81,11 +69,15 @@ public partial class ToolsWindow : Window
         AddToTreeRoot.IsEnabled = false;
         ClearContextActions();
     }
+    private void UpdateHandler(object? sender, NotifyCollectionChangedEventArgs? e)
+    { 
+        UpdateActionsList();
+        UpdateTreeView();
+    }
 
     public void ReloadContext(Scene ctx)
     {
         UnloadContext();
-
         LoadContext(ctx);
     }
 
@@ -103,15 +95,16 @@ public partial class ToolsWindow : Window
 
     public bool b_IsCtxPresent()
     {
-        if (S_ctx == null)
+        if (S_ctx is null)
             MessageBox.Show("Невозможно совершить это действие -- отсутствует открытая сцена!", "Ошибка отсутствия контекста");
 
-        return S_ctx != null;
+        return S_ctx is not null;
     }
 
     private void ColorPicker_Change(object sender, RoutedPropertyChangedEventArgs<Color?> e)
     {
-        if (SceneTreeView != null) OnColorChange?.Invoke(NewColorPicker.SelectedColor.Safe());
+        if (SceneTreeView != null) 
+            OnColorChange?.Invoke(NewColorPicker.SelectedColor.Safe());
     }
 
     /// <summary>
@@ -128,10 +121,10 @@ public partial class ToolsWindow : Window
             if (addFolderDialog.ShowDialog() == true)
             {
                 AddObject newAction = new();
-                newAction.Do(new object[] { addFolderDialog.ResponseText });
-                S_ctx?.l_Actions.Add(newAction);
+                newAction.Do([addFolderDialog.ResponseText]);
 
                 AddToTreeView<TreeViewFolder>(addFolderDialog.ResponseText);
+                S_ctx?.l_Actions.Add(newAction);
             }
         }
     }
@@ -213,10 +206,6 @@ public partial class ToolsWindow : Window
     }
 
 
-
-
-    private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
-
     private TreeViewGeneric? FindSelected()
     {
         string? searchName = (string?)((TreeViewItem)SceneTreeView.SelectedItem)?.Header;
@@ -229,6 +218,8 @@ public partial class ToolsWindow : Window
 
         return selected;
     }
+
+    private void SceneTreeView_Rename(object sender, MouseButtonEventArgs e) => TreeViewRename();
 
     private void TreeViewRename()
     {
@@ -244,7 +235,7 @@ public partial class ToolsWindow : Window
             if (renameDialog.ShowDialog() == true &&
                 renameDialog.ResponseText.Length > 0)
             {
-                string result = renameDialog.ResponseText.Replace(' ', '_').Replace('.', '_');
+                string result = renameDialog.ResponseText.MakeSafe();
 
                 if (result.Length > 16 &&
                     !Settings.b_bypassNamingWarning)
@@ -263,32 +254,34 @@ public partial class ToolsWindow : Window
                     Settings.b_bypassNamingWarning = nameLengthWarnDialog.BypassDialog;
                 }
 
+                IAction newRenameAction = new RenameObject();
                 TreeViewGeneric? parent = selected.GetParent();
                 int occurences = 0;
-                if (parent != null)
-                {
+
+                newRenameAction.Do(new object[] { selected, result });
+
+                if (parent is not null)
                     occurences = parent.l_Child.Where(x => x.s_Name == result).Count();
-                    result += occurences > 0 ? occurences : "";
+                else
+                    occurences = S_ctx.T_treeRoot.l_Child.Where(x => x.s_Name == result).Count();
 
-                    // Костыль
-                    if (selected.GetType() == typeof(TreeViewShape))
-                    {
+                result += occurences > 0 ? occurences : "";
 
-                        if (char.IsDigit(result[0]))
-                            result = result.Replace(result[0], '_');
+                if (selected is TreeViewShape selectedShape)
+                {
+                    // TODO make a more clear way
+                    var a = selectedShape.GetStoredValue();
+                    a.Name = result;
+                    selectedShape.SetStoredValue(a);
 
-                        ((Shape)selected.GetStoredValue()).Name = result;
-                    }
+                    UpdateTreeView();
                 }
                 else
                 {
-                    // Если у нас оказался корневой каталог
-                    occurences = S_ctx.T_treeRoot.l_Child.Where(x => x.s_Name == result).Count();
-                    result += occurences > 0 ? occurences : "";
+                    // dont trust anyone
+                    if (selected is TreeViewFolder selectedFolder)
+                        selectedFolder.SetStoredValue(result);
                 }
-                IAction newRenameAction = new RenameObject();
-
-                newRenameAction.Do(new object[] { selected, result });
 
                 S_ctx.l_Actions.Add(newRenameAction);
             }
@@ -305,7 +298,7 @@ public partial class ToolsWindow : Window
 
             DeleteObject newAction = new();
 
-            newAction.Do(new object[] { selected });
+            newAction.Do([selected]);
 
             S_ctx.l_Actions.Add(newAction);
         }
@@ -326,8 +319,8 @@ public partial class ToolsWindow : Window
     {
         if (item == null) return;
 
-        if (item.GetType() == typeof(TreeViewShape))
-            S_ctx?.GetCanvas().Children.Remove((Shape)item.GetStoredValue());
+        if (item is TreeViewShape shapeItem)
+            S_ctx?.GetCanvas().Children.Remove(shapeItem.GetStoredValue());
 
         item.GetParent()?.l_Child.Remove(item);
     }
@@ -387,10 +380,6 @@ public partial class ToolsWindow : Window
                 }
             }
     }
-
-
-
-
 
     private void GetCode_Click(object sender, RoutedEventArgs e)
     {
@@ -528,7 +517,6 @@ public partial class ToolsWindow : Window
 
                         S_ctx.l_Actions.Add(newAction);
                     }
-                    UpdateActionsList();
                 }
                 else if (moveDialog.ResponseText.Length > 0 && !Settings.b_bypassIncorrectMoveInputWarning)
                 {

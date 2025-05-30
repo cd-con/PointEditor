@@ -24,7 +24,7 @@ internal class SmoothPolygon : IAction
         if (smoothered.Points.Last() != smoothered.Points.First())
             smoothered.Points.Add(smoothered.Points.First());// Добавляем ещё одну точку с координатами начала, чтобы не было резкой прямой линии
         // Сглаживаем
-        smoothered.Points = Utils.SmootherPolygonCubic(smoothered.Points, (int)args[0]);
+        smoothered.Points = UtilsGeometry.SmootherPolygonCubic(smoothered.Points, (int)args[0]);
     }
 
     public void Undo() => smoothered.Points = initial;

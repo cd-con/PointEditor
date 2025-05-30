@@ -38,18 +38,16 @@
                 <Button Content="Получить точки" HorizontalAlignment="Center" Margin="0,147,0,0" VerticalAlignment="Top" Click="GetCode_Click" Width="246" Background="#01DDDDDD" Foreground="White" Height="19" Grid.Row="1"/>
                 <!-- Оставлен временно, чтобы код не сыпал ошибками -->
                 <TreeView x:Name="SceneTreeView" 
-                      Margin="0,4,0,0" 
-                      Height="134" 
-                      VerticalAlignment="Top" 
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      Margin="0 0 0 50"
                       Background="Transparent" 
                       Foreground="White" 
                       Grid.Row="1"
                       PreviewMouseDoubleClick="SceneTreeView_Rename"
                       PreviewMouseRightButtonUp="MenuContentHandler" 
                       PreviewMouseLeftButtonDown="ClearSelection"
-                      SelectedItemChanged="SceneTreeView_SelectedItemChanged"
-                      HorizontalAlignment="Center" 
-                      Width="246">
+                      SelectedItemChanged="SceneTreeView_SelectedItemChanged">
                     <TreeView.ContextMenu>
                         <ContextMenu>
                             <MenuItem x:Name="AddToTreeRoot"
@@ -86,15 +84,15 @@
                 <Button x:Name="Revert"
                     Content="Откатить" 
                     HorizontalAlignment="Left" 
-                    Margin="10,0,0,0"
+                    Margin="5"
                     Width="96" Height="20" 
                     VerticalAlignment="Center" 
                     Click="Revert_Click" 
                     Grid.Row="1"
                     Background="#00DDDDDD" Foreground="White"/>
                 <Button Content="Закрепить" 
-                    HorizontalAlignment="Left" 
-                    Margin="27,0,0,0" 
+                    HorizontalAlignment="Right" 
+                    Margin="5" 
                     Width="96"
                     Height="20" 
                     VerticalAlignment="Center" 
